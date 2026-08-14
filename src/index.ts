@@ -3,6 +3,7 @@ import type { Env } from "./types";
 import * as gc from "./gocardless";
 import * as db from "./db";
 import { login, logout, isAuthenticated } from "./auth";
+import { detectRecurring } from "./recurring";
 
 const app = new Hono<{ Bindings: Env }>();
 
@@ -122,6 +123,14 @@ app.get("/api/accounts/:id/transactions", async (c) => {
 app.get("/api/transactions/recent", async (c) => {
   const limit = Math.min(Number(c.req.query("limit") || 8), 200);
   return c.json(await db.listRecentTransactions(c.env, limit));
+});
+
+// Detected recurring payments (standing orders, subscriptions, direct
+// debits) - computed on the fly from synced transaction history, nothing
+// stored. See src/recurring.ts for the detection method and why.
+app.get("/api/recurring", async (c) => {
+  const rows = await db.listTransactionsForDetection(c.env);
+  return c.json(detectRecurring(rows));
 });
 
 // Refreshes balances + transactions for every linked account. Call this

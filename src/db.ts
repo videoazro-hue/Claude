@@ -174,6 +174,25 @@ export async function removeConnection(env: Env, id: string) {
   ]);
 }
 
+export async function listTransactionsForDetection(env: Env) {
+  const { results } = await env.DB.prepare(
+    `SELECT t.account_id, a.institution_name, t.booking_date, t.amount, t.currency, t.description, t.counterparty
+     FROM transactions t
+     JOIN accounts a ON a.id = t.account_id
+     WHERE a.status = 'active' AND t.booking_date IS NOT NULL
+     ORDER BY t.account_id, t.booking_date`
+  ).all<{
+    account_id: string;
+    institution_name: string;
+    booking_date: string;
+    amount: number;
+    currency: string;
+    description: string | null;
+    counterparty: string | null;
+  }>();
+  return results;
+}
+
 export async function listAllAccountIds(env: Env) {
   const { results } = await env.DB.prepare(
     `SELECT id FROM accounts WHERE status = 'active'`

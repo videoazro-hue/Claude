@@ -238,6 +238,13 @@
         <div id="history-txns"></div>
       </section>
 
+      <section id="screen-recurring" class="screen hidden">
+        <h2>Recurring</h2>
+        <p class="empty-note" style="text-align:left;padding:0 0 16px;">Detected automatically from your transaction history — not pulled directly from your bank's standing order settings.</p>
+        <div class="stats-totals" id="recurring-totals"></div>
+        <div id="recurring-list"></div>
+      </section>
+
       <section id="screen-stats" class="screen hidden">
         <h2>Stats</h2>
         <div class="stats-totals" id="stats-totals"></div>
@@ -265,6 +272,9 @@
       </button>
       <button class="nav-btn" data-screen="history" title="History">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>
+      </button>
+      <button class="nav-btn" data-screen="recurring" title="Recurring">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
       </button>
       <button class="nav-btn" data-screen="stats" title="Stats">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 20V12M12 20V6M18 20v-7"/></svg>
@@ -392,6 +402,7 @@ async function loadAll() {
   await renderHistory();
   renderStats();
   renderConnections();
+  await renderRecurring();
 }
 
 function renderBalance() {
@@ -505,6 +516,43 @@ async function renderHistory() {
     if (!txns.length) { el.innerHTML = '<p class="empty-note">No transactions yet. Click Refresh once a bank is linked.</p>'; return; }
     el.innerHTML = groupByDate(txns).map(g => `<div class="date-header">${escapeHtml(g.key)}</div>${g.items.map(txnRowHtml).join("")}`).join("");
   } catch { el.innerHTML = '<p class="empty-note">Could not load transactions.</p>'; }
+}
+
+const CADENCE_LABELS = { weekly: "Weekly", biweekly: "Every 2 weeks", monthly: "Monthly", quarterly: "Quarterly", semiannual: "Every 6 months", yearly: "Yearly" };
+
+function recurringRowHtml(item) {
+  const isCredit = Number(item.amount) > 0;
+  const initial = (item.label || "?").trim()[0]?.toUpperCase() || "?";
+  return `
+    <div class="txn-row">
+      <div class="txn-left">
+        <div class="txn-avatar" style="background:${avatarColor(item.label)}">${initial}</div>
+        <div style="min-width:0">
+          <div class="txn-name">${escapeHtml(item.label)}</div>
+          <div class="txn-sub">${escapeHtml(item.institution_name)} • ${CADENCE_LABELS[item.cadence] || item.cadence} • next ~${item.next_predicted_date}</div>
+        </div>
+      </div>
+      <div class="txn-amount ${isCredit ? "credit" : ""}">${isCredit ? "+" : ""}${fmt(item.amount, item.currency)}</div>
+    </div>`;
+}
+
+async function renderRecurring() {
+  const totalsBox = $("recurring-totals");
+  const listBox = $("recurring-list");
+  listBox.innerHTML = '<p class="empty-note">Scanning transaction history…</p>';
+  try {
+    const { items, totalsByCurrency } = await api("/api/recurring");
+    totalsBox.innerHTML = Object.entries(totalsByCurrency).map(([cur, t]) => `
+      <div class="stat-chip"><div class="amt">${fmt(t.monthlyOut, cur)}</div><div class="cur">est. recurring spend / month</div></div>
+      ${t.monthlyIn ? `<div class="stat-chip"><div class="amt" style="color:var(--lime)">${fmt(t.monthlyIn, cur)}</div><div class="cur">est. recurring income / month</div></div>` : ""}
+    `).join("");
+    listBox.innerHTML = items.length
+      ? items.map(recurringRowHtml).join("")
+      : '<p class="empty-note">No recurring payments detected yet — this needs a few months of synced transaction history for the same payee to repeat.</p>';
+  } catch {
+    totalsBox.innerHTML = "";
+    listBox.innerHTML = '<p class="empty-note">Could not load recurring payments.</p>';
+  }
 }
 
 function renderStats() {

@@ -93,7 +93,10 @@ export function createAgreement(
     method: "POST",
     body: JSON.stringify({
       institution_id: opts.institution_id,
-      max_historical_days: opts.max_historical_days ?? 180,
+      // Ask for as much history as possible (recurring-payment detection
+      // benefits from it); GoCardless silently clamps this to whatever the
+      // specific bank actually allows, so requesting more never fails.
+      max_historical_days: opts.max_historical_days ?? 730,
       access_valid_for_days: opts.access_valid_for_days ?? 90,
       access_scope: ["balances", "details", "transactions"],
     }),
