@@ -1,0 +1,31 @@
+name = "bankzro"
+main = "src/index.ts"
+compatibility_date = "2026-08-01"
+compatibility_flags = ["nodejs_compat"]
+
+# Static frontend (public/index.html etc.) served alongside the Worker.
+# The Worker code always runs first so it can enforce auth on /api/* routes;
+# static files under public/ are served for everything else.
+[assets]
+directory = "./public"
+binding = "ASSETS"
+run_worker_first = true
+
+[[d1_databases]]
+binding = "DB"
+database_name = "bankzro-db"
+database_id = "5bd7f325-a76b-4e16-8b18-66e187ff198e"
+
+[[kv_namespaces]]
+binding = "KV"
+id = "02b973411bde42759ddb3ffe538edeec"
+
+[vars]
+# Non-secret config. Override per-environment if needed.
+DEFAULT_COUNTRY = "DE"
+APP_REDIRECT_URL = "https://bankzro.<your-subdomain>.workers.dev/api/callback"
+
+# Secrets (set these with `wrangler secret put <NAME>`, never commit them):
+#   GC_SECRET_ID     - GoCardless Bank Account Data secret_id (free account)
+#   GC_SECRET_KEY    - GoCardless Bank Account Data secret_key
+#   APP_PASSWORD     - the password that gates access to your dashboard

@@ -1,0 +1,284 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>bankzro</title>
+<style>
+  :root {
+    --bg: #0b0d12;
+    --panel: #12151c;
+    --panel2: #191d26;
+    --border: #262b36;
+    --text: #e8eaed;
+    --muted: #8b92a3;
+    --accent: #5b8cff;
+    --good: #35c98f;
+    --bad: #ff6b6b;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+  }
+  .wrap { max-width: 880px; margin: 0 auto; padding: 24px 16px 80px; }
+  header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }
+  h1 { font-size: 20px; margin: 0; font-weight: 600; }
+  .muted { color: var(--muted); }
+  button {
+    font: inherit; cursor: pointer; border-radius: 10px; border: 1px solid var(--border);
+    background: var(--panel2); color: var(--text); padding: 9px 14px;
+  }
+  button.primary { background: var(--accent); border-color: var(--accent); color: white; }
+  button:disabled { opacity: 0.5; cursor: default; }
+  input {
+    font: inherit; background: var(--panel2); border: 1px solid var(--border); color: var(--text);
+    border-radius: 10px; padding: 10px 12px; width: 100%;
+  }
+  .card { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 18px; margin-bottom: 16px; }
+  .summary-amount { font-size: 34px; font-weight: 700; }
+  .row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  .bank-row { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-top: 1px solid var(--border); cursor: pointer; }
+  .bank-row:first-child { border-top: none; }
+  .bank-left { display: flex; align-items: center; gap: 12px; }
+  .bank-logo { width: 32px; height: 32px; border-radius: 8px; object-fit: contain; background: #fff; }
+  .bank-name { font-weight: 500; }
+  .bank-sub { font-size: 12px; color: var(--muted); }
+  .amount { font-weight: 600; }
+  .neg { color: var(--bad); }
+  .pos { color: var(--good); }
+  #login-screen { max-width: 340px; margin: 15vh auto; }
+  .hidden { display: none !important; }
+  .search-results { max-height: 320px; overflow-y: auto; margin-top: 10px; }
+  .modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; padding: 16px; z-index: 10; }
+  .modal { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 20px; width: 100%; max-width: 480px; max-height: 80vh; overflow-y: auto; }
+  .txn { display: flex; justify-content: space-between; padding: 8px 0; border-top: 1px solid var(--border); font-size: 14px; }
+  .txn:first-child { border-top: none; }
+  .error { color: var(--bad); font-size: 13px; margin-top: 8px; }
+  small.muted { display: block; margin-top: 6px; }
+</style>
+</head>
+<body>
+<div id="login-screen" class="wrap hidden">
+  <div class="card">
+    <h1>bankzro</h1>
+    <p class="muted">Enter your app password to see your accounts.</p>
+    <input id="password" type="password" placeholder="Password" />
+    <div style="margin-top:12px;"><button class="primary" id="login-btn" style="width:100%">Unlock</button></div>
+    <div class="error hidden" id="login-error">Wrong password.</div>
+  </div>
+</div>
+
+<div id="app" class="wrap hidden">
+  <header>
+    <h1>bankzro</h1>
+    <div class="row">
+      <button id="sync-btn">Refresh</button>
+      <button id="add-bank-btn" class="primary">+ Add bank</button>
+      <button id="logout-btn">Logout</button>
+    </div>
+  </header>
+
+  <div class="card">
+    <div class="muted">Total balance</div>
+    <div id="totals" class="summary-amount">–</div>
+    <small class="muted" id="last-synced"></small>
+  </div>
+
+  <div class="card">
+    <div class="row" style="margin-bottom: 4px;">
+      <strong>Accounts</strong>
+    </div>
+    <div id="accounts-list"><p class="muted">No accounts linked yet.</p></div>
+  </div>
+</div>
+
+<div id="add-bank-modal" class="modal-backdrop hidden">
+  <div class="modal">
+    <div class="row" style="margin-bottom:12px;">
+      <strong>Add a bank</strong>
+      <button id="close-add-bank">✕</button>
+    </div>
+    <input id="country-input" value="DE" maxlength="2" placeholder="Country code (DE, AT, GB, ...)" />
+    <div style="height:8px"></div>
+    <input id="bank-search" placeholder="Search bank name (e.g. Commerzbank, Revolut, PayPal, Klarna)" />
+    <div class="search-results" id="search-results"></div>
+  </div>
+</div>
+
+<div id="txn-modal" class="modal-backdrop hidden">
+  <div class="modal">
+    <div class="row" style="margin-bottom:12px;">
+      <strong id="txn-title">Transactions</strong>
+      <button id="close-txn">✕</button>
+    </div>
+    <div id="txn-list"></div>
+  </div>
+</div>
+
+<script>
+const $ = (id) => document.getElementById(id);
+let institutionsCache = [];
+
+function fmt(amount, currency) {
+  try { return new Intl.NumberFormat(undefined, { style: "currency", currency: currency || "EUR" }).format(amount); }
+  catch { return `${amount} ${currency || ""}`; }
+}
+
+async function api(path, opts = {}) {
+  const res = await fetch(path, { ...opts, headers: { "Content-Type": "application/json", ...(opts.headers||{}) } });
+  if (res.status === 401) { showLogin(); throw new Error("unauthenticated"); }
+  if (!res.ok) throw new Error((await res.json().catch(()=>({}))).error || res.statusText);
+  return res.json();
+}
+
+function showLogin() {
+  $("app").classList.add("hidden");
+  $("login-screen").classList.remove("hidden");
+}
+function showApp() {
+  $("login-screen").classList.add("hidden");
+  $("app").classList.remove("hidden");
+  loadAccounts();
+}
+
+async function init() {
+  const me = await api("/api/me");
+  if (me.authenticated) showApp(); else showLogin();
+
+  const params = new URLSearchParams(location.search);
+  if (params.get("linked")) history.replaceState({}, "", location.pathname);
+  if (params.get("error")) {
+    console.warn("connection error:", params.get("error"));
+    history.replaceState({}, "", location.pathname);
+  }
+}
+
+$("login-btn").onclick = async () => {
+  $("login-error").classList.add("hidden");
+  try {
+    const r = await fetch("/api/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ password: $("password").value }),
+    });
+    if (!r.ok) { $("login-error").classList.remove("hidden"); return; }
+    showApp();
+  } catch { $("login-error").classList.remove("hidden"); }
+};
+$("password").addEventListener("keydown", (e) => { if (e.key === "Enter") $("login-btn").click(); });
+
+$("logout-btn").onclick = async () => { await api("/api/logout", { method: "POST" }); showLogin(); };
+
+async function loadAccounts() {
+  const accounts = await api("/api/accounts");
+  const list = $("accounts-list");
+  if (!accounts.length) { list.innerHTML = '<p class="muted">No accounts linked yet. Click "+ Add bank" to connect one.</p>'; }
+  else {
+    list.innerHTML = accounts.map(a => `
+      <div class="bank-row" data-id="${a.id}" data-name="${escapeHtml(a.display_name || a.institution_name)}">
+        <div class="bank-left">
+          ${a.institution_logo ? `<img class="bank-logo" src="${a.institution_logo}" />` : `<div class="bank-logo"></div>`}
+          <div>
+            <div class="bank-name">${escapeHtml(a.institution_name)}</div>
+            <div class="bank-sub">${escapeHtml(a.display_name || a.iban || "")}</div>
+          </div>
+        </div>
+        <div class="amount ${Number(a.balance_amount) < 0 ? 'neg' : ''}">
+          ${a.balance_amount != null ? fmt(a.balance_amount, a.balance_currency) : '<span class="muted">–</span>'}
+        </div>
+      </div>
+    `).join("");
+    list.querySelectorAll(".bank-row").forEach(row => {
+      row.onclick = () => openTransactions(row.dataset.id, row.dataset.name);
+    });
+  }
+
+  // total per currency
+  const totals = {};
+  for (const a of accounts) {
+    if (a.balance_amount == null) continue;
+    const cur = a.balance_currency || "EUR";
+    totals[cur] = (totals[cur] || 0) + Number(a.balance_amount);
+  }
+  const totalStr = Object.entries(totals).map(([cur, amt]) => fmt(amt, cur)).join("  +  ");
+  $("totals").textContent = totalStr || "–";
+  $("last-synced").textContent = accounts[0]?.balance_fetched_at ? `Last synced ${accounts[0].balance_fetched_at} UTC` : "";
+}
+
+$("sync-btn").onclick = async () => {
+  $("sync-btn").disabled = true;
+  $("sync-btn").textContent = "Refreshing…";
+  try { await api("/api/sync", { method: "POST" }); await loadAccounts(); }
+  finally { $("sync-btn").disabled = false; $("sync-btn").textContent = "Refresh"; }
+};
+
+$("add-bank-btn").onclick = () => { $("add-bank-modal").classList.remove("hidden"); $("bank-search").focus(); loadInstitutions(); };
+$("close-add-bank").onclick = () => $("add-bank-modal").classList.add("hidden");
+
+async function loadInstitutions() {
+  const country = $("country-input").value.trim().toUpperCase() || "DE";
+  institutionsCache = await api(`/api/institutions?country=${country}`);
+  renderSearchResults();
+}
+$("country-input").addEventListener("change", loadInstitutions);
+$("bank-search").addEventListener("input", renderSearchResults);
+
+function renderSearchResults() {
+  const q = $("bank-search").value.trim().toLowerCase();
+  const filtered = q ? institutionsCache.filter(i => i.name.toLowerCase().includes(q)) : institutionsCache.slice(0, 25);
+  $("search-results").innerHTML = filtered.map(i => `
+    <div class="bank-row" data-id="${i.id}" data-name="${escapeHtml(i.name)}" data-logo="${i.logo || ''}">
+      <div class="bank-left">
+        ${i.logo ? `<img class="bank-logo" src="${i.logo}" />` : `<div class="bank-logo"></div>`}
+        <div class="bank-name">${escapeHtml(i.name)}</div>
+      </div>
+      <button class="primary connect-btn">Connect</button>
+    </div>
+  `).join("") || '<p class="muted">No matches.</p>';
+
+  $("search-results").querySelectorAll(".connect-btn").forEach(btn => {
+    btn.onclick = async (e) => {
+      const row = e.target.closest(".bank-row");
+      btn.disabled = true; btn.textContent = "Connecting…";
+      try {
+        const { link } = await api("/api/connections", {
+          method: "POST",
+          body: JSON.stringify({ institution_id: row.dataset.id, institution_name: row.dataset.name, institution_logo: row.dataset.logo }),
+        });
+        location.href = link; // redirect to the bank's own login page
+      } catch (err) {
+        btn.disabled = false; btn.textContent = "Connect";
+        alert("Could not start connection: " + err.message);
+      }
+    };
+  });
+}
+
+async function openTransactions(accountId, name) {
+  $("txn-title").textContent = name;
+  $("txn-list").innerHTML = '<p class="muted">Loading…</p>';
+  $("txn-modal").classList.remove("hidden");
+  const txns = await api(`/api/accounts/${accountId}/transactions?limit=100`);
+  $("txn-list").innerHTML = txns.length ? txns.map(t => `
+    <div class="txn">
+      <div>
+        <div>${escapeHtml(t.description || t.counterparty || "Transaction")}</div>
+        <div class="muted">${t.booking_date || ""}</div>
+      </div>
+      <div class="amount ${t.amount < 0 ? 'neg' : 'pos'}">${fmt(t.amount, t.currency)}</div>
+    </div>
+  `).join("") : '<p class="muted">No transactions yet — click Refresh on the dashboard.</p>';
+}
+$("close-txn").onclick = () => $("txn-modal").classList.add("hidden");
+
+function escapeHtml(s) {
+  return String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;" }[c]));
+}
+
+init();
+</script>
+</body>
+</html>

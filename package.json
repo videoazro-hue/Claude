@@ -1,0 +1,21 @@
+{
+  "name": "bankzro",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Personal multi-bank account aggregator (Commerzbank, C24, Klarna, Advanzia, Revolut, PayPal, ...) built on Cloudflare Workers + D1, using the GoCardless Bank Account Data (Open Banking / PSD2) API.",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "migrate:remote": "wrangler d1 execute bankzro-db --remote --file=./migrations/0001_init.sql",
+    "migrate:local": "wrangler d1 execute bankzro-db --local --file=./migrations/0001_init.sql",
+    "secrets": "echo 'Run: wrangler secret put GC_SECRET_ID / GC_SECRET_KEY / APP_PASSWORD'"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^5.0.0",
+    "typescript": "^5.6.0",
+    "wrangler": "^4.0.0"
+  },
+  "dependencies": {
+    "hono": "^4.6.0"
+  }
+}
