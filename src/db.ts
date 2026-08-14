@@ -204,7 +204,7 @@ export async function listInvestments(env: Env) {
 
 export async function listInvestmentsWithBalances(env: Env) {
   const { results } = await env.DB.prepare(
-    `SELECT i.id, i.provider, i.label, i.status, i.last_error,
+    `SELECT i.id, i.provider, i.label, i.status, i.last_error, i.config_json,
             b.asset, b.quantity, b.value_amount, b.value_currency, b.fetched_at
      FROM investments i
      LEFT JOIN investment_balances b ON b.investment_id = i.id

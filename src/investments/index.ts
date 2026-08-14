@@ -3,6 +3,7 @@ import { decryptSecret } from "../crypto";
 import { syncCryptoAddress, type CryptoAddressConfig } from "./cryptoAddress";
 import { syncCoinbase, type CoinbaseCreds } from "./coinbase";
 import { syncEtoro, type EtoroCreds } from "./etoro";
+import { syncManualMetal, type ManualMetalConfig } from "./manualMetal";
 import type { InvestmentBalance, InvestmentProvider } from "./types";
 
 export * from "./types";
@@ -19,6 +20,8 @@ export async function syncInvestment(env: Env, row: InvestmentRow): Promise<Inve
   switch (row.provider) {
     case "crypto_address":
       return syncCryptoAddress(config as CryptoAddressConfig);
+    case "manual_metal":
+      return syncManualMetal(config as ManualMetalConfig);
     case "coinbase": {
       if (!row.secret_enc) throw new Error("Missing Coinbase credentials");
       const creds = JSON.parse(await decryptSecret(env, row.secret_enc)) as CoinbaseCreds;

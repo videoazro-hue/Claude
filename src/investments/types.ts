@@ -1,4 +1,4 @@
-export type InvestmentProvider = "crypto_address" | "coinbase" | "etoro";
+export type InvestmentProvider = "crypto_address" | "coinbase" | "etoro" | "manual_metal";
 
 export interface InvestmentBalance {
   asset: string;

@@ -105,6 +105,12 @@ deliberately read-only wherever a real read-only option exists:
   API key, and pick the **View** (read-only) permission. That key can only
   read balances, never trade or withdraw. It's encrypted at rest with
   `ENCRYPTION_KEY` before being stored.
+- **Physical metal** (gold, silver, platinum, palladium) - there's no
+  account to connect at all: enter how much you physically hold (e.g. 1 oz
+  of gold) and its current value is computed from a free, no-key spot-price
+  feed ([gold-api.com](https://gold-api.com)) every time you refresh. The
+  quantity is just what you typed in, so there's nothing here an attacker
+  could use even in the worst case - only a live price gets fetched.
 - **eToro** - eToro has a public API with genuine read-only ("Read")
   keys. The connection UI and encrypted storage are fully working, but
   live balance syncing isn't wired up to a verified endpoint yet - their

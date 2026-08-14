@@ -200,12 +200,19 @@ app.get("/api/investments", async (c) => {
   const grouped = new Map<string, any>();
   for (const r of rows) {
     if (!grouped.has(r.id)) {
+      let config = {};
+      try {
+        config = JSON.parse(r.config_json || "{}");
+      } catch {
+        // ignore malformed config, fall back to {}
+      }
       grouped.set(r.id, {
         id: r.id,
         provider: r.provider,
         label: r.label,
         status: r.status,
         last_error: r.last_error,
+        config,
         balances: [],
       });
     }
@@ -223,13 +230,16 @@ app.get("/api/investments", async (c) => {
 
 app.post("/api/investments", async (c) => {
   const body = await c.req.json<{
-    provider?: "crypto_address" | "coinbase" | "etoro";
+    provider?: "crypto_address" | "coinbase" | "etoro" | "manual_metal";
     label?: string;
     chain?: "BTC" | "ETH";
     address?: string;
     apiKey?: string;
     apiSecret?: string;
     userKey?: string;
+    metal?: "XAU" | "XAG" | "XPT" | "XPD";
+    quantity?: number;
+    unit?: "oz" | "g";
   }>();
 
   if (!body.provider || !body.label) return c.json({ error: "provider and label required" }, 400);
@@ -241,6 +251,10 @@ app.post("/api/investments", async (c) => {
   if (body.provider === "crypto_address") {
     if (!body.chain || !body.address) return c.json({ error: "chain and address required" }, 400);
     config_json = JSON.stringify({ chain: body.chain, address: body.address.trim() });
+  } else if (body.provider === "manual_metal") {
+    if (!body.metal || !body.quantity || !body.unit) return c.json({ error: "metal, quantity and unit required" }, 400);
+    if (body.quantity <= 0) return c.json({ error: "quantity must be greater than 0" }, 400);
+    config_json = JSON.stringify({ metal: body.metal, quantity: Number(body.quantity), unit: body.unit });
   } else if (body.provider === "coinbase") {
     if (!body.apiKey || !body.apiSecret) return c.json({ error: "API key and secret required" }, 400);
     secret_enc = await encryptSecret(

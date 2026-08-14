@@ -396,10 +396,15 @@
       </button>
     </div>
 
-    <div class="provider-grid">
+    <div class="provider-grid" style="grid-template-columns:repeat(2,1fr);">
       <button class="provider-card" data-provider="crypto_address">
         <div class="provider-name">Crypto wallet</div>
         <div class="provider-sub">Public address only</div>
+        <span class="badge-readonly">Read-only</span>
+      </button>
+      <button class="provider-card" data-provider="manual_metal">
+        <div class="provider-name">Physical metal</div>
+        <div class="provider-sub">Gold, silver, etc. — you enter the amount</div>
         <span class="badge-readonly">Read-only</span>
       </button>
       <button class="provider-card" data-provider="coinbase">
@@ -422,6 +427,24 @@
       </select>
       <input id="inv-address" class="field" placeholder="Public address (e.g. bc1... or 0x...)" style="width:100%;margin-bottom:8px;" />
       <input id="inv-label-crypto_address" class="field" placeholder="Nickname (e.g. Ledger)" style="width:100%;" />
+    </div>
+
+    <div id="inv-form-manual_metal" class="inv-form hidden">
+      <p class="empty-note inv-note">There's no account to connect here — just tell it what you physically hold. Only the market price is looked up live (a free public spot-price feed); the amount is whatever you enter, so there's nothing an attacker could use even in the worst case.</p>
+      <select id="inv-metal" class="field" style="width:100%;margin-bottom:8px;">
+        <option value="XAU">Gold</option>
+        <option value="XAG">Silver</option>
+        <option value="XPT">Platinum</option>
+        <option value="XPD">Palladium</option>
+      </select>
+      <div style="display:flex;gap:8px;margin-bottom:8px;">
+        <input id="inv-metal-qty" class="field" type="number" step="any" min="0" placeholder="Amount (e.g. 1)" style="flex:1;" />
+        <select id="inv-metal-unit" class="field" style="width:90px;">
+          <option value="oz">oz</option>
+          <option value="g">g</option>
+        </select>
+      </div>
+      <input id="inv-label-manual_metal" class="field" placeholder="Nickname (e.g. Gold coins)" style="width:100%;" />
     </div>
 
     <div id="inv-form-coinbase" class="inv-form hidden">
@@ -865,13 +888,16 @@ function renderSearchResults() {
 // ---- investments ----
 let selectedInvProvider = null;
 
-function providerLabel(p) { return { crypto_address: "Crypto wallet", coinbase: "Coinbase", etoro: "eToro" }[p] || p; }
+const METAL_NAMES = { XAU: "Gold", XAG: "Silver", XPT: "Platinum", XPD: "Palladium" };
+function providerLabel(p) { return { crypto_address: "Crypto wallet", coinbase: "Coinbase", etoro: "eToro", manual_metal: "Physical metal" }[p] || p; }
 
 function investmentRowHtml(inv) {
   const isCrypto = (asset) => !["EUR", "USD", "GBP", "CHF"].includes(asset);
-  const holdings = inv.balances
-    .map(b => b.quantity != null ? `${Number(b.quantity).toFixed(isCrypto(b.asset) ? 6 : 2)} ${b.asset}` : fmt(b.value_amount, b.value_currency))
-    .join(" · ");
+  const holdings = inv.provider === "manual_metal"
+    ? inv.balances.map(b => `${inv.config?.quantity ?? b.quantity} ${inv.config?.unit ?? ""} ${METAL_NAMES[b.asset] || b.asset}`).join(" · ")
+    : inv.balances
+        .map(b => b.quantity != null ? `${Number(b.quantity).toFixed(isCrypto(b.asset) ? 6 : 2)} ${b.asset}` : fmt(b.value_amount, b.value_currency))
+        .join(" · ");
   const totalValue = inv.balances.reduce((s, b) => s + Number(b.value_amount || 0), 0);
   const cur = inv.balances[0]?.value_currency || "EUR";
   const statusNote = inv.status === "error"
@@ -949,6 +975,11 @@ $("inv-connect-btn").onclick = async () => {
       payload.chain = $("inv-chain").value;
       payload.address = $("inv-address").value.trim();
       payload.label = $("inv-label-crypto_address").value.trim() || (payload.chain + " wallet");
+    } else if (selectedInvProvider === "manual_metal") {
+      payload.metal = $("inv-metal").value;
+      payload.quantity = Number($("inv-metal-qty").value);
+      payload.unit = $("inv-metal-unit").value;
+      payload.label = $("inv-label-manual_metal").value.trim() || (METAL_NAMES[payload.metal] || "Metal");
     } else if (selectedInvProvider === "coinbase") {
       payload.apiKey = $("inv-cb-key").value.trim();
       payload.apiSecret = $("inv-cb-secret").value.trim();
