@@ -1,4 +1,4 @@
-# bankzro — personal multi-bank dashboard
+# financezro — personal multi-bank dashboard
 
 See all your accounts (Commerzbank, C24, Klarna, Advanzia, Revolut, PayPal, ...)
 in one place. Runs on Cloudflare Workers + D1, using the **GoCardless Bank
@@ -60,11 +60,11 @@ npx wrangler secret put APP_PASSWORD   # the password you'll use to unlock the d
 ```
 npm run deploy
 ```
-Wrangler prints your live URL, e.g. `https://bankzro.<your-subdomain>.workers.dev`.
+Wrangler prints your live URL, e.g. `https://financezro.<your-subdomain>.workers.dev`.
 
 ### 7. Fix the redirect URL and redeploy
 Open `wrangler.toml` and set `APP_REDIRECT_URL` to
-`https://bankzro.<your-subdomain>.workers.dev/api/callback` using the real
+`https://financezro.<your-subdomain>.workers.dev/api/callback` using the real
 URL from step 6, then:
 ```
 npm run deploy

@@ -125,7 +125,7 @@ export async function insertTransactions(
 
 export async function listConnections(env: Env) {
   const { results } = await env.DB.prepare(
-    `SELECT * FROM connections ORDER BY created_at DESC`
+    `SELECT * FROM connections WHERE status != 'removed' ORDER BY created_at DESC`
   ).all();
   return results;
 }
@@ -151,6 +151,27 @@ export async function listTransactionsForAccount(env: Env, accountId: string, li
     .bind(accountId, limit)
     .all();
   return results;
+}
+
+export async function listRecentTransactions(env: Env, limit = 8) {
+  const { results } = await env.DB.prepare(
+    `SELECT t.*, a.institution_name, a.display_name, a.institution_logo
+     FROM transactions t
+     JOIN accounts a ON a.id = t.account_id
+     WHERE a.status = 'active'
+     ORDER BY t.booking_date DESC, t.created_at DESC
+     LIMIT ?`
+  )
+    .bind(limit)
+    .all();
+  return results;
+}
+
+export async function removeConnection(env: Env, id: string) {
+  await env.DB.batch([
+    env.DB.prepare(`UPDATE connections SET status = 'removed' WHERE id = ?`).bind(id),
+    env.DB.prepare(`UPDATE accounts SET status = 'removed' WHERE connection_id = ?`).bind(id),
+  ]);
 }
 
 export async function listAllAccountIds(env: Env) {

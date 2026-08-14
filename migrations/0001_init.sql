@@ -1,11 +1,12 @@
 -- Bank aggregator schema
 -- One row per GoCardless "requisition" (a single bank-linking flow)
 CREATE TABLE connections (
-  id TEXT PRIMARY KEY,                  -- GoCardless requisition id
+  id TEXT PRIMARY KEY,                  -- our own reference id (uuid), used as GoCardless requisition `reference`
+  requisition_id TEXT,                  -- GoCardless's own requisition id, set once the requisition is created
   institution_id TEXT NOT NULL,
   institution_name TEXT NOT NULL,
   institution_logo TEXT,
-  status TEXT NOT NULL DEFAULT 'pending', -- pending | linked | expired | error
+  status TEXT NOT NULL DEFAULT 'pending', -- pending | linked | expired | error | removed
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 

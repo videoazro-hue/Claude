@@ -3,128 +3,316 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>bankzro</title>
+<title>financezro</title>
 <style>
   :root {
-    --bg: #0b0d12;
-    --panel: #12151c;
-    --panel2: #191d26;
-    --border: #262b36;
-    --text: #e8eaed;
-    --muted: #8b92a3;
-    --accent: #5b8cff;
-    --good: #35c98f;
-    --bad: #ff6b6b;
+    --bg: #0b0c0e;
+    --panel: #17181c;
+    --panel2: #1e2024;
+    --border: #2a2c31;
+    --text: #f4f5f6;
+    --muted: #8d919a;
+    --lime: #d6ff5c;
+    --lime-ink: #12150a;
+    --danger: #ff6b6b;
   }
   * { box-sizing: border-box; }
-  body {
-    margin: 0;
+  html, body {
+    margin: 0; min-height: 100%; background: var(--bg); color: var(--text);
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    background: var(--bg);
-    color: var(--text);
   }
-  .wrap { max-width: 880px; margin: 0 auto; padding: 24px 16px 80px; }
-  header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }
-  h1 { font-size: 20px; margin: 0; font-weight: 600; }
-  .muted { color: var(--muted); }
-  button {
-    font: inherit; cursor: pointer; border-radius: 10px; border: 1px solid var(--border);
-    background: var(--panel2); color: var(--text); padding: 9px 14px;
-  }
-  button.primary { background: var(--accent); border-color: var(--accent); color: white; }
-  button:disabled { opacity: 0.5; cursor: default; }
-  input {
-    font: inherit; background: var(--panel2); border: 1px solid var(--border); color: var(--text);
-    border-radius: 10px; padding: 10px 12px; width: 100%;
-  }
-  .card { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 18px; margin-bottom: 16px; }
-  .summary-amount { font-size: 34px; font-weight: 700; }
-  .row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-  .bank-row { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-top: 1px solid var(--border); cursor: pointer; }
-  .bank-row:first-child { border-top: none; }
-  .bank-left { display: flex; align-items: center; gap: 12px; }
-  .bank-logo { width: 32px; height: 32px; border-radius: 8px; object-fit: contain; background: #fff; }
-  .bank-name { font-weight: 500; }
-  .bank-sub { font-size: 12px; color: var(--muted); }
-  .amount { font-weight: 600; }
-  .neg { color: var(--bad); }
-  .pos { color: var(--good); }
-  #login-screen { max-width: 340px; margin: 15vh auto; }
+  button { font: inherit; cursor: pointer; }
+  input { font: inherit; }
   .hidden { display: none !important; }
-  .search-results { max-height: 320px; overflow-y: auto; margin-top: 10px; }
-  .modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; padding: 16px; z-index: 10; }
-  .modal { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 20px; width: 100%; max-width: 480px; max-height: 80vh; overflow-y: auto; }
-  .txn { display: flex; justify-content: space-between; padding: 8px 0; border-top: 1px solid var(--border); font-size: 14px; }
-  .txn:first-child { border-top: none; }
-  .error { color: var(--bad); font-size: 13px; margin-top: 8px; }
-  small.muted { display: block; margin-top: 6px; }
+
+  /* ---------- login ---------- */
+  #login-screen {
+    min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px;
+  }
+  .login-card {
+    width: 100%; max-width: 340px; background: var(--panel); border: 1px solid var(--border);
+    border-radius: 22px; padding: 28px 24px;
+  }
+  .login-card .logo-dot { width: 44px; height: 44px; border-radius: 14px; background: var(--lime); display: flex; align-items: center; justify-content: center; font-weight: 800; color: var(--lime-ink); font-size: 20px; margin-bottom: 16px; }
+  .login-card h1 { font-size: 22px; margin: 0 0 4px; }
+  .login-card p { color: var(--muted); font-size: 14px; margin: 0 0 18px; }
+  .field {
+    background: var(--panel2); border: 1px solid var(--border); border-radius: 12px; padding: 12px 14px; width: 100%;
+  }
+  input.field { color: var(--text); }
+  input.field::placeholder { color: var(--muted); }
+  .btn { border: 1px solid var(--border); background: var(--panel2); color: var(--text); border-radius: 12px; padding: 12px 16px; }
+  .btn.block { width: 100%; margin-top: 10px; }
+  .btn.primary { background: var(--lime); border-color: var(--lime); color: var(--lime-ink); font-weight: 700; }
+  .btn.danger { color: var(--danger); }
+  .error-text { color: var(--danger); font-size: 13px; margin-top: 10px; }
+
+  /* ---------- app shell ---------- */
+  .shell { max-width: 460px; margin: 0 auto; min-height: 100vh; position: relative; padding: 20px 16px 110px; }
+
+  .topbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 22px; }
+  .who { display: flex; align-items: center; gap: 12px; }
+  .avatar { width: 42px; height: 42px; border-radius: 50%; background: var(--lime); color: var(--lime-ink); display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 16px; }
+  .greeting-sub { color: var(--muted); font-size: 13px; }
+  .greeting-name { font-weight: 700; font-size: 16px; }
+  .top-actions { display: flex; gap: 8px; }
+  .icon-btn {
+    width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--border); background: var(--panel2);
+    color: var(--text); display: flex; align-items: center; justify-content: center;
+  }
+  .icon-btn svg { width: 18px; height: 18px; }
+  .icon-btn.spinning svg { animation: spin 0.8s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .screen h2 { font-size: 18px; margin: 0 0 12px; }
+
+  .balance-card {
+    background: linear-gradient(155deg, #1c1e22, #131418);
+    border: 1px solid var(--border); border-radius: 22px; padding: 22px; margin-bottom: 26px;
+  }
+  .balance-label { color: var(--muted); font-size: 13px; margin-bottom: 6px; }
+  .balance-amount { font-size: 34px; font-weight: 800; letter-spacing: -0.5px; }
+  .balance-amount.small { font-size: 22px; }
+  .balance-row { display: flex; align-items: center; justify-content: space-between; margin-top: 14px; }
+  .balance-currencies { color: var(--muted); font-size: 13px; }
+  .pill-btn {
+    background: var(--lime); color: var(--lime-ink); border: none; border-radius: 999px;
+    padding: 10px 18px; font-weight: 700; font-size: 13px;
+  }
+
+  .section-head { display: flex; align-items: center; justify-content: space-between; margin: 6px 0 12px; }
+  .section-head h2 { margin: 0; }
+  .link-btn { background: none; border: none; color: var(--muted); font-size: 13px; }
+  .link-btn:hover { color: var(--text); }
+
+  .wallet-scroll { display: flex; gap: 12px; overflow-x: auto; padding-bottom: 6px; margin-bottom: 26px; scroll-snap-type: x mandatory; }
+  .wallet-scroll::-webkit-scrollbar { height: 0; }
+  .wallet-card {
+    flex: 0 0 auto; width: 220px; height: 132px; border-radius: 20px; padding: 16px;
+    display: flex; flex-direction: column; justify-content: space-between; color: #fff;
+    position: relative; overflow: hidden; scroll-snap-align: start; border: 1px solid rgba(255,255,255,0.08);
+  }
+  .wallet-card .wc-top { display: flex; align-items: flex-start; justify-content: space-between; }
+  .wallet-card .wc-inst { font-weight: 700; font-size: 14px; max-width: 140px; }
+  .wallet-card .wc-logo { width: 26px; height: 26px; border-radius: 8px; background: #fff; object-fit: contain; padding: 3px; }
+  .wallet-card .wc-mask { font-size: 12px; opacity: 0.7; letter-spacing: 1px; }
+  .wallet-card .wc-bottom { display: flex; align-items: flex-end; justify-content: space-between; }
+  .wallet-card .wc-balance { font-size: 18px; font-weight: 800; }
+  .wallet-card .wc-cur { font-size: 11px; opacity: 0.65; }
+  .wallet-add {
+    flex: 0 0 auto; width: 220px; height: 132px; border-radius: 20px; border: 1.5px dashed var(--border);
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; color: var(--muted);
+    background: var(--panel);
+  }
+  .wallet-add svg { width: 22px; height: 22px; }
+
+  .txn-row { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-top: 1px solid var(--border); }
+  .txn-row:first-child { border-top: none; }
+  .txn-left { display: flex; align-items: center; gap: 12px; min-width: 0; }
+  .txn-avatar { width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; color: #fff; flex: 0 0 auto; }
+  .txn-name { font-size: 14px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 190px; }
+  .txn-sub { font-size: 12px; color: var(--muted); }
+  .txn-amount { font-weight: 700; font-size: 14px; white-space: nowrap; }
+  .txn-amount.credit { color: var(--lime); }
+  .date-header { color: var(--muted); font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.4px; margin: 18px 0 4px; }
+  .date-header:first-child { margin-top: 0; }
+  .empty-note { color: var(--muted); font-size: 14px; padding: 20px 0; text-align: center; }
+
+  .chip-row { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; margin-bottom: 16px; }
+  .chip {
+    flex: 0 0 auto; border: 1px solid var(--border); background: var(--panel2); color: var(--muted);
+    border-radius: 999px; padding: 8px 14px; font-size: 13px;
+  }
+  .chip.active { background: var(--lime); color: var(--lime-ink); border-color: var(--lime); font-weight: 700; }
+
+  .stats-totals { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px; }
+  .stat-chip { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 12px 16px; }
+  .stat-chip .amt { font-weight: 800; font-size: 18px; }
+  .stat-chip .cur { color: var(--muted); font-size: 12px; }
+  .bar-row { margin-bottom: 16px; }
+  .bar-row .bar-top { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 6px; }
+  .bar-row .bar-name { font-weight: 500; }
+  .bar-track { height: 8px; border-radius: 6px; background: var(--panel2); overflow: hidden; }
+  .bar-fill { height: 100%; border-radius: 6px; background: var(--lime); }
+
+  .card { background: var(--panel); border: 1px solid var(--border); border-radius: 16px; padding: 16px; margin-bottom: 14px; }
+  .card label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 8px; }
+  .conn-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-top: 1px solid var(--border); }
+  .conn-row:first-child { border-top: none; }
+  .conn-name { font-size: 14px; font-weight: 500; }
+  .conn-status { font-size: 12px; color: var(--muted); }
+  .remove-btn { background: none; border: none; color: var(--danger); font-size: 13px; }
+
+  /* ---------- bottom nav ---------- */
+  .bottom-nav {
+    position: fixed; left: 0; right: 0; bottom: 18px; display: flex; justify-content: center; z-index: 5;
+  }
+  .bottom-nav-inner {
+    display: flex; gap: 4px; background: var(--panel); border: 1px solid var(--border);
+    border-radius: 999px; padding: 6px; box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+  }
+  .nav-btn {
+    border: none; background: none; color: var(--muted); width: 56px; height: 44px; border-radius: 999px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .nav-btn svg { width: 20px; height: 20px; }
+  .nav-btn.active { background: var(--lime); color: var(--lime-ink); }
+
+  /* ---------- add-bank modal ---------- */
+  .modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.65); display: flex; align-items: flex-end; justify-content: center; z-index: 20; }
+  @media (min-width: 520px) { .modal-backdrop { align-items: center; } }
+  .modal { background: var(--panel); border: 1px solid var(--border); border-radius: 20px 20px 0 0; padding: 20px; width: 100%; max-width: 460px; max-height: 82vh; overflow-y: auto; }
+  @media (min-width: 520px) { .modal { border-radius: 20px; } }
+  .modal-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+  .modal-head strong { font-size: 16px; }
+  .close-btn { width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--border); background: var(--panel2); color: var(--text); display: flex; align-items: center; justify-content: center; }
+  .close-btn svg { width: 16px; height: 16px; }
+  .search-results { margin-top: 10px; }
+  .inst-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-top: 1px solid var(--border); }
+  .inst-row:first-child { border-top: none; }
+  .inst-left { display: flex; align-items: center; gap: 12px; }
+  .inst-logo { width: 30px; height: 30px; border-radius: 8px; background: #fff; object-fit: contain; }
+  .inst-logo.placeholder { background: var(--panel2); }
 </style>
 </head>
 <body>
-<div id="login-screen" class="wrap hidden">
-  <div class="card">
-    <h1>bankzro</h1>
-    <p class="muted">Enter your app password to see your accounts.</p>
-    <input id="password" type="password" placeholder="Password" />
-    <div style="margin-top:12px;"><button class="primary" id="login-btn" style="width:100%">Unlock</button></div>
-    <div class="error hidden" id="login-error">Wrong password.</div>
+
+<div id="login-screen">
+  <div class="login-card">
+    <div class="logo-dot">fz</div>
+    <h1>financezro</h1>
+    <p>Enter your password to see your accounts.</p>
+    <input id="password" class="field" type="password" placeholder="Password" />
+    <button class="btn primary block" id="login-btn">Unlock</button>
+    <div class="error-text hidden" id="login-error">Wrong password.</div>
   </div>
 </div>
 
-<div id="app" class="wrap hidden">
-  <header>
-    <h1>bankzro</h1>
-    <div class="row">
-      <button id="sync-btn">Refresh</button>
-      <button id="add-bank-btn" class="primary">+ Add bank</button>
-      <button id="logout-btn">Logout</button>
-    </div>
-  </header>
+<div id="app" class="hidden">
+  <div class="shell">
+    <header class="topbar">
+      <div class="who">
+        <div class="avatar" id="avatar">F</div>
+        <div>
+          <div class="greeting-sub" id="greeting-sub">Good morning</div>
+          <div class="greeting-name" id="greeting-name">Welcome back</div>
+        </div>
+      </div>
+      <div class="top-actions">
+        <button class="icon-btn" id="header-refresh" title="Refresh">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11a9 9 0 0 1 15.5-6.5L21 7"/><path d="M21 3v5h-5"/><path d="M21 13a9 9 0 0 1-15.5 6.5L3 17"/><path d="M3 21v-5h5"/></svg>
+        </button>
+        <button class="icon-btn" id="header-add" title="Add bank">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+        </button>
+      </div>
+    </header>
 
-  <div class="card">
-    <div class="muted">Total balance</div>
-    <div id="totals" class="summary-amount">–</div>
-    <small class="muted" id="last-synced"></small>
+    <main id="screens">
+      <section id="screen-home" class="screen">
+        <div class="balance-card">
+          <div class="balance-label">Total Balance</div>
+          <div class="balance-amount" id="home-total">–</div>
+          <div class="balance-row">
+            <div class="balance-currencies" id="home-currencies"></div>
+            <button class="pill-btn" id="home-add-bank">+ Add bank</button>
+          </div>
+        </div>
+
+        <div class="section-head">
+          <h2>My Wallet</h2>
+          <button class="link-btn" id="wallet-menu">•••</button>
+        </div>
+        <div class="wallet-scroll" id="wallet-scroll"></div>
+
+        <div class="section-head">
+          <h2>Transactions</h2>
+          <button class="link-btn" id="home-view-all">View All</button>
+        </div>
+        <div id="home-txns"></div>
+      </section>
+
+      <section id="screen-history" class="screen hidden">
+        <h2>History</h2>
+        <div class="chip-row" id="history-chips"></div>
+        <div id="history-txns"></div>
+      </section>
+
+      <section id="screen-stats" class="screen hidden">
+        <h2>Stats</h2>
+        <div class="stats-totals" id="stats-totals"></div>
+        <div id="stats-bars"></div>
+      </section>
+
+      <section id="screen-settings" class="screen hidden">
+        <h2>Settings</h2>
+        <div class="card">
+          <label>Your name</label>
+          <input id="settings-name" class="field" placeholder="e.g. Alex" style="width:100%" />
+        </div>
+        <button class="btn primary block" id="settings-add-bank">+ Add a bank</button>
+        <div class="card" id="settings-connections" style="margin-top:14px;"></div>
+        <button class="btn block" id="settings-refresh">Refresh all data</button>
+        <button class="btn block danger" id="settings-logout">Logout</button>
+      </section>
+    </main>
   </div>
 
-  <div class="card">
-    <div class="row" style="margin-bottom: 4px;">
-      <strong>Accounts</strong>
+  <nav class="bottom-nav">
+    <div class="bottom-nav-inner">
+      <button class="nav-btn active" data-screen="home" title="Home">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11.5 12 4l9 7.5"/><path d="M5 10v9a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1v-9"/></svg>
+      </button>
+      <button class="nav-btn" data-screen="history" title="History">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>
+      </button>
+      <button class="nav-btn" data-screen="stats" title="Stats">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 20V12M12 20V6M18 20v-7"/></svg>
+      </button>
+      <button class="nav-btn" data-screen="settings" title="Settings">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"/></svg>
+      </button>
     </div>
-    <div id="accounts-list"><p class="muted">No accounts linked yet.</p></div>
-  </div>
+  </nav>
 </div>
 
 <div id="add-bank-modal" class="modal-backdrop hidden">
   <div class="modal">
-    <div class="row" style="margin-bottom:12px;">
+    <div class="modal-head">
       <strong>Add a bank</strong>
-      <button id="close-add-bank">✕</button>
+      <button class="close-btn" id="close-add-bank">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
     </div>
-    <input id="country-input" value="DE" maxlength="2" placeholder="Country code (DE, AT, GB, ...)" />
+    <input id="country-input" class="field" value="DE" maxlength="2" placeholder="Country code (DE, AT, GB, ...)" style="width:100%" />
     <div style="height:8px"></div>
-    <input id="bank-search" placeholder="Search bank name (e.g. Commerzbank, Revolut, PayPal, Klarna)" />
+    <input id="bank-search" class="field" placeholder="Search bank name (Commerzbank, Revolut, PayPal, Klarna...)" style="width:100%" />
     <div class="search-results" id="search-results"></div>
-  </div>
-</div>
-
-<div id="txn-modal" class="modal-backdrop hidden">
-  <div class="modal">
-    <div class="row" style="margin-bottom:12px;">
-      <strong id="txn-title">Transactions</strong>
-      <button id="close-txn">✕</button>
-    </div>
-    <div id="txn-list"></div>
   </div>
 </div>
 
 <script>
 const $ = (id) => document.getElementById(id);
 let institutionsCache = [];
+let accounts = [];
+let connections = [];
+let historyFilter = "all";
 
 function fmt(amount, currency) {
   try { return new Intl.NumberFormat(undefined, { style: "currency", currency: currency || "EUR" }).format(amount); }
   catch { return `${amount} ${currency || ""}`; }
+}
+function escapeHtml(s) {
+  return String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;" }[c]));
+}
+function hueFor(seed) {
+  let h = 0;
+  for (const ch of String(seed)) h = (h * 31 + ch.charCodeAt(0)) % 360;
+  return h;
+}
+function avatarColor(seed) {
+  const h = hueFor(seed);
+  return `hsl(${h} 55% 42%)`;
 }
 
 async function api(path, opts = {}) {
@@ -138,84 +326,255 @@ function showLogin() {
   $("app").classList.add("hidden");
   $("login-screen").classList.remove("hidden");
 }
-function showApp() {
+async function showApp() {
   $("login-screen").classList.add("hidden");
   $("app").classList.remove("hidden");
-  loadAccounts();
+  applyGreeting();
+  await loadAll();
 }
+
+function applyGreeting() {
+  const h = new Date().getHours();
+  const word = h < 12 ? "Good morning" : h < 18 ? "Good afternoon" : "Good evening";
+  const name = localStorage.getItem("fz_name") || "";
+  $("greeting-sub").textContent = word;
+  $("greeting-name").textContent = name ? name : "Welcome back";
+  $("avatar").textContent = (name ? name[0] : "F").toUpperCase();
+  $("settings-name").value = name;
+}
+$("settings-name").addEventListener("input", () => {
+  localStorage.setItem("fz_name", $("settings-name").value.trim());
+  applyGreeting();
+});
 
 async function init() {
   const me = await api("/api/me");
-  if (me.authenticated) showApp(); else showLogin();
+  if (me.authenticated) await showApp(); else showLogin();
 
   const params = new URLSearchParams(location.search);
-  if (params.get("linked")) history.replaceState({}, "", location.pathname);
-  if (params.get("error")) {
-    console.warn("connection error:", params.get("error"));
-    history.replaceState({}, "", location.pathname);
-  }
+  if (params.get("linked") || params.get("error")) history.replaceState({}, "", location.pathname);
 }
 
 $("login-btn").onclick = async () => {
   $("login-error").classList.add("hidden");
   try {
     const r = await fetch("/api/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
+      method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ password: $("password").value }),
     });
     if (!r.ok) { $("login-error").classList.remove("hidden"); return; }
-    showApp();
+    await showApp();
   } catch { $("login-error").classList.remove("hidden"); }
 };
 $("password").addEventListener("keydown", (e) => { if (e.key === "Enter") $("login-btn").click(); });
+$("settings-logout").onclick = async () => { await api("/api/logout", { method: "POST" }); showLogin(); };
 
-$("logout-btn").onclick = async () => { await api("/api/logout", { method: "POST" }); showLogin(); };
+// ---- nav ----
+document.querySelectorAll(".nav-btn").forEach(btn => {
+  btn.onclick = () => switchScreen(btn.dataset.screen);
+});
+function switchScreen(name) {
+  document.querySelectorAll(".screen").forEach(s => s.classList.add("hidden"));
+  document.querySelectorAll(".nav-btn").forEach(b => b.classList.toggle("active", b.dataset.screen === name));
+  $(`screen-${name}`).classList.remove("hidden");
+  window.scrollTo({ top: 0 });
+}
+$("home-view-all").onclick = () => switchScreen("history");
+$("wallet-menu").onclick = () => switchScreen("settings");
 
-async function loadAccounts() {
-  const accounts = await api("/api/accounts");
-  const list = $("accounts-list");
-  if (!accounts.length) { list.innerHTML = '<p class="muted">No accounts linked yet. Click "+ Add bank" to connect one.</p>'; }
-  else {
-    list.innerHTML = accounts.map(a => `
-      <div class="bank-row" data-id="${a.id}" data-name="${escapeHtml(a.display_name || a.institution_name)}">
-        <div class="bank-left">
-          ${a.institution_logo ? `<img class="bank-logo" src="${a.institution_logo}" />` : `<div class="bank-logo"></div>`}
-          <div>
-            <div class="bank-name">${escapeHtml(a.institution_name)}</div>
-            <div class="bank-sub">${escapeHtml(a.display_name || a.iban || "")}</div>
-          </div>
-        </div>
-        <div class="amount ${Number(a.balance_amount) < 0 ? 'neg' : ''}">
-          ${a.balance_amount != null ? fmt(a.balance_amount, a.balance_currency) : '<span class="muted">–</span>'}
-        </div>
-      </div>
-    `).join("");
-    list.querySelectorAll(".bank-row").forEach(row => {
-      row.onclick = () => openTransactions(row.dataset.id, row.dataset.name);
-    });
-  }
+// ---- data loading ----
+async function loadAll() {
+  [accounts, connections] = await Promise.all([api("/api/accounts"), api("/api/connections")]);
+  renderBalance();
+  renderWallet();
+  renderHomeTxns();
+  renderHistoryChips();
+  await renderHistory();
+  renderStats();
+  renderConnections();
+}
 
-  // total per currency
+function renderBalance() {
   const totals = {};
   for (const a of accounts) {
     if (a.balance_amount == null) continue;
     const cur = a.balance_currency || "EUR";
     totals[cur] = (totals[cur] || 0) + Number(a.balance_amount);
   }
-  const totalStr = Object.entries(totals).map(([cur, amt]) => fmt(amt, cur)).join("  +  ");
-  $("totals").textContent = totalStr || "–";
-  $("last-synced").textContent = accounts[0]?.balance_fetched_at ? `Last synced ${accounts[0].balance_fetched_at} UTC` : "";
+  const entries = Object.entries(totals);
+  if (!entries.length) {
+    $("home-total").textContent = "–";
+    $("home-currencies").textContent = "No accounts linked yet";
+  } else {
+    $("home-total").textContent = fmt(entries[0][1], entries[0][0]);
+    $("home-total").className = "balance-amount" + (entries.length > 1 ? " small" : "");
+    $("home-currencies").textContent = entries.slice(1).map(([cur, amt]) => fmt(amt, cur)).join("  •  ") || `${accounts.length} account${accounts.length === 1 ? "" : "s"}`;
+  }
 }
 
-$("sync-btn").onclick = async () => {
-  $("sync-btn").disabled = true;
-  $("sync-btn").textContent = "Refreshing…";
-  try { await api("/api/sync", { method: "POST" }); await loadAccounts(); }
-  finally { $("sync-btn").disabled = false; $("sync-btn").textContent = "Refresh"; }
-};
+function renderWallet() {
+  const el = $("wallet-scroll");
+  const addCard = `
+    <button class="wallet-add" id="wallet-add-card">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+      Add bank
+    </button>`;
+  el.innerHTML = accounts.map(a => {
+    const h = hueFor(a.institution_id);
+    const mask = a.iban ? "•••• " + a.iban.slice(-4) : (a.product || "Account");
+    return `
+    <div class="wallet-card" style="background:linear-gradient(135deg, hsl(${h} 45% 22%), hsl(${(h+35)%360} 40% 10%))" data-account="${a.id}">
+      <div class="wc-top">
+        <div class="wc-inst">${escapeHtml(a.institution_name)}</div>
+        ${a.institution_logo ? `<img class="wc-logo" src="${a.institution_logo}" />` : ""}
+      </div>
+      <div class="wc-mask">${escapeHtml(mask)}</div>
+      <div class="wc-bottom">
+        <div class="wc-balance">${a.balance_amount != null ? fmt(a.balance_amount, a.balance_currency) : "–"}</div>
+        <div class="wc-cur">${escapeHtml(a.balance_currency || "")}</div>
+      </div>
+    </div>`;
+  }).join("") + addCard;
 
-$("add-bank-btn").onclick = () => { $("add-bank-modal").classList.remove("hidden"); $("bank-search").focus(); loadInstitutions(); };
+  el.querySelectorAll(".wallet-card").forEach(card => {
+    card.onclick = () => { historyFilter = card.dataset.account; switchScreen("history"); renderHistoryChips(); renderHistory(); };
+  });
+  $("wallet-add-card").onclick = openAddBank;
+}
+
+function txnRowHtml(t) {
+  const label = t.description || t.counterparty || t.institution_name || "Transaction";
+  const initial = (t.counterparty || t.description || t.institution_name || "?").trim()[0]?.toUpperCase() || "?";
+  const isCredit = Number(t.amount) > 0;
+  return `
+    <div class="txn-row">
+      <div class="txn-left">
+        <div class="txn-avatar" style="background:${avatarColor(t.counterparty || t.institution_name || label)}">${initial}</div>
+        <div style="min-width:0">
+          <div class="txn-name">${escapeHtml(label)}</div>
+          <div class="txn-sub">${escapeHtml(t.institution_name || "")}${t.institution_name ? " • " : ""}${t.booking_date || ""}</div>
+        </div>
+      </div>
+      <div class="txn-amount ${isCredit ? "credit" : ""}">${isCredit ? "+" : ""}${fmt(t.amount, t.currency)}</div>
+    </div>`;
+}
+
+async function renderHomeTxns() {
+  const el = $("home-txns");
+  el.innerHTML = '<p class="empty-note">Loading…</p>';
+  try {
+    const txns = await api("/api/transactions/recent?limit=5");
+    el.innerHTML = txns.length ? txns.map(txnRowHtml).join("") : '<p class="empty-note">No transactions yet. Click Refresh once a bank is linked.</p>';
+  } catch { el.innerHTML = '<p class="empty-note">Could not load transactions.</p>'; }
+}
+
+function renderHistoryChips() {
+  const el = $("history-chips");
+  const chips = [{ id: "all", label: "All" }, ...accounts.map(a => ({ id: a.id, label: a.display_name || a.institution_name }))];
+  el.innerHTML = chips.map(c => `<button class="chip ${historyFilter === c.id ? "active" : ""}" data-id="${c.id}">${escapeHtml(c.label)}</button>`).join("");
+  el.querySelectorAll(".chip").forEach(chip => {
+    chip.onclick = () => { historyFilter = chip.dataset.id; renderHistoryChips(); renderHistory(); };
+  });
+}
+
+function groupByDate(txns) {
+  const groups = [];
+  let lastKey = null;
+  const today = new Date().toDateString();
+  const yesterday = new Date(Date.now() - 86400000).toDateString();
+  for (const t of txns) {
+    const d = t.booking_date ? new Date(t.booking_date) : null;
+    let key = "Unknown date";
+    if (d && !isNaN(d)) {
+      const ds = d.toDateString();
+      key = ds === today ? "Today" : ds === yesterday ? "Yesterday" : d.toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" });
+    }
+    if (key !== lastKey) { groups.push({ key, items: [] }); lastKey = key; }
+    groups[groups.length - 1].items.push(t);
+  }
+  return groups;
+}
+
+async function renderHistory() {
+  const el = $("history-txns");
+  el.innerHTML = '<p class="empty-note">Loading…</p>';
+  try {
+    const txns = historyFilter === "all"
+      ? await api("/api/transactions/recent?limit=200")
+      : await api(`/api/accounts/${historyFilter}/transactions?limit=200`);
+    if (!txns.length) { el.innerHTML = '<p class="empty-note">No transactions yet. Click Refresh once a bank is linked.</p>'; return; }
+    el.innerHTML = groupByDate(txns).map(g => `<div class="date-header">${escapeHtml(g.key)}</div>${g.items.map(txnRowHtml).join("")}`).join("");
+  } catch { el.innerHTML = '<p class="empty-note">Could not load transactions.</p>'; }
+}
+
+function renderStats() {
+  const totalsBox = $("stats-totals");
+  const barsBox = $("stats-bars");
+  if (!accounts.length) {
+    totalsBox.innerHTML = "";
+    barsBox.innerHTML = '<p class="empty-note">Add a bank to see stats.</p>';
+    return;
+  }
+  const byCurrency = {};
+  for (const a of accounts) {
+    if (a.balance_amount == null) continue;
+    const cur = a.balance_currency || "EUR";
+    (byCurrency[cur] ||= []).push(a);
+  }
+  totalsBox.innerHTML = Object.entries(byCurrency).map(([cur, list]) => {
+    const sum = list.reduce((s, a) => s + Number(a.balance_amount), 0);
+    return `<div class="stat-chip"><div class="amt">${fmt(sum, cur)}</div><div class="cur">${list.length} account${list.length === 1 ? "" : "s"} • ${escapeHtml(cur)}</div></div>`;
+  }).join("");
+
+  barsBox.innerHTML = Object.entries(byCurrency).map(([cur, list]) => {
+    const max = Math.max(...list.map(a => Math.abs(Number(a.balance_amount))), 1);
+    const sorted = [...list].sort((a, b) => Number(b.balance_amount) - Number(a.balance_amount));
+    return sorted.map(a => {
+      const pct = Math.max(4, Math.round((Math.abs(Number(a.balance_amount)) / max) * 100));
+      return `
+        <div class="bar-row">
+          <div class="bar-top"><span class="bar-name">${escapeHtml(a.display_name || a.institution_name)}</span><span>${fmt(a.balance_amount, a.balance_currency)}</span></div>
+          <div class="bar-track"><div class="bar-fill" style="width:${pct}%"></div></div>
+        </div>`;
+    }).join("");
+  }).join("");
+}
+
+function renderConnections() {
+  const el = $("settings-connections");
+  if (!connections.length) { el.innerHTML = '<p class="empty-note" style="padding:0">No banks connected yet.</p>'; return; }
+  el.innerHTML = connections.map(c => `
+    <div class="conn-row">
+      <div>
+        <div class="conn-name">${escapeHtml(c.institution_name)}</div>
+        <div class="conn-status">${escapeHtml(c.status)}</div>
+      </div>
+      <button class="remove-btn" data-id="${c.id}">Remove</button>
+    </div>`).join("");
+  el.querySelectorAll(".remove-btn").forEach(btn => {
+    btn.onclick = async () => {
+      if (!confirm("Remove this bank from financezro? This only removes it from your dashboard, it does not close the bank's own access grant.")) return;
+      await api(`/api/connections/${btn.dataset.id}`, { method: "DELETE" });
+      await loadAll();
+    };
+  });
+}
+
+// ---- refresh / sync ----
+async function doSync() {
+  const btn = $("header-refresh");
+  btn.classList.add("spinning");
+  try { await api("/api/sync", { method: "POST" }); await loadAll(); }
+  finally { btn.classList.remove("spinning"); }
+}
+$("header-refresh").onclick = doSync;
+$("settings-refresh").onclick = doSync;
+
+// ---- add bank modal ----
+function openAddBank() { $("add-bank-modal").classList.remove("hidden"); $("bank-search").focus(); loadInstitutions(); }
+$("home-add-bank").onclick = openAddBank;
+$("header-add").onclick = openAddBank;
+$("settings-add-bank").onclick = openAddBank;
 $("close-add-bank").onclick = () => $("add-bank-modal").classList.add("hidden");
 
 async function loadInstitutions() {
@@ -230,52 +589,31 @@ function renderSearchResults() {
   const q = $("bank-search").value.trim().toLowerCase();
   const filtered = q ? institutionsCache.filter(i => i.name.toLowerCase().includes(q)) : institutionsCache.slice(0, 25);
   $("search-results").innerHTML = filtered.map(i => `
-    <div class="bank-row" data-id="${i.id}" data-name="${escapeHtml(i.name)}" data-logo="${i.logo || ''}">
-      <div class="bank-left">
-        ${i.logo ? `<img class="bank-logo" src="${i.logo}" />` : `<div class="bank-logo"></div>`}
-        <div class="bank-name">${escapeHtml(i.name)}</div>
+    <div class="inst-row" data-id="${i.id}" data-name="${escapeHtml(i.name)}" data-logo="${i.logo || ''}">
+      <div class="inst-left">
+        ${i.logo ? `<img class="inst-logo" src="${i.logo}" />` : `<div class="inst-logo placeholder"></div>`}
+        <div>${escapeHtml(i.name)}</div>
       </div>
-      <button class="primary connect-btn">Connect</button>
+      <button class="btn primary connect-btn">Connect</button>
     </div>
-  `).join("") || '<p class="muted">No matches.</p>';
+  `).join("") || '<p class="empty-note">No matches.</p>';
 
   $("search-results").querySelectorAll(".connect-btn").forEach(btn => {
     btn.onclick = async (e) => {
-      const row = e.target.closest(".bank-row");
+      const row = e.target.closest(".inst-row");
       btn.disabled = true; btn.textContent = "Connecting…";
       try {
         const { link } = await api("/api/connections", {
           method: "POST",
           body: JSON.stringify({ institution_id: row.dataset.id, institution_name: row.dataset.name, institution_logo: row.dataset.logo }),
         });
-        location.href = link; // redirect to the bank's own login page
+        location.href = link;
       } catch (err) {
         btn.disabled = false; btn.textContent = "Connect";
         alert("Could not start connection: " + err.message);
       }
     };
   });
-}
-
-async function openTransactions(accountId, name) {
-  $("txn-title").textContent = name;
-  $("txn-list").innerHTML = '<p class="muted">Loading…</p>';
-  $("txn-modal").classList.remove("hidden");
-  const txns = await api(`/api/accounts/${accountId}/transactions?limit=100`);
-  $("txn-list").innerHTML = txns.length ? txns.map(t => `
-    <div class="txn">
-      <div>
-        <div>${escapeHtml(t.description || t.counterparty || "Transaction")}</div>
-        <div class="muted">${t.booking_date || ""}</div>
-      </div>
-      <div class="amount ${t.amount < 0 ? 'neg' : 'pos'}">${fmt(t.amount, t.currency)}</div>
-    </div>
-  `).join("") : '<p class="muted">No transactions yet — click Refresh on the dashboard.</p>';
-}
-$("close-txn").onclick = () => $("txn-modal").classList.add("hidden");
-
-function escapeHtml(s) {
-  return String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;" }[c]));
 }
 
 init();

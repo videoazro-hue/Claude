@@ -105,6 +105,11 @@ app.get("/api/callback", async (c) => {
   return c.redirect("/?linked=1");
 });
 
+app.delete("/api/connections/:id", async (c) => {
+  await db.removeConnection(c.env, c.req.param("id"));
+  return c.json({ ok: true });
+});
+
 app.get("/api/accounts", async (c) => {
   return c.json(await db.listAccounts(c.env));
 });
@@ -112,6 +117,11 @@ app.get("/api/accounts", async (c) => {
 app.get("/api/accounts/:id/transactions", async (c) => {
   const limit = Math.min(Number(c.req.query("limit") || 100), 500);
   return c.json(await db.listTransactionsForAccount(c.env, c.req.param("id"), limit));
+});
+
+app.get("/api/transactions/recent", async (c) => {
+  const limit = Math.min(Number(c.req.query("limit") || 8), 200);
+  return c.json(await db.listRecentTransactions(c.env, limit));
 });
 
 // Refreshes balances + transactions for every linked account. Call this
