@@ -173,6 +173,39 @@
   .inst-left { display: flex; align-items: center; gap: 12px; }
   .inst-logo { width: 30px; height: 30px; border-radius: 8px; background: #fff; object-fit: contain; }
   .inst-logo.placeholder { background: var(--panel2); }
+
+  /* ---------- read-only badge ---------- */
+  .badge-readonly {
+    display: inline-flex; align-items: center; gap: 3px; font-size: 10px; font-weight: 800;
+    color: var(--lime-ink); background: var(--lime); padding: 2px 7px; border-radius: 999px;
+    text-transform: uppercase; letter-spacing: 0.3px; vertical-align: middle;
+  }
+  .badge-readonly svg { width: 9px; height: 9px; }
+
+  /* ---------- investments: provider picker ---------- */
+  .provider-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 16px; }
+  .provider-card { background: var(--panel2); border: 1px solid var(--border); border-radius: 14px; padding: 12px 10px; text-align: left; display: flex; flex-direction: column; gap: 6px; color: var(--text); }
+  .provider-card.active { border-color: var(--lime); background: rgba(214,255,92,0.08); }
+  .provider-name { font-weight: 700; font-size: 13px; }
+  .provider-sub { font-size: 11px; color: var(--muted); }
+  .inv-form { margin-bottom: 8px; }
+  .inv-note { text-align: left; padding: 0 0 10px; }
+
+  /* ---------- login: auth tabs ---------- */
+  .auth-tabs { display: flex; gap: 6px; margin-bottom: 16px; background: var(--panel2); border-radius: 12px; padding: 4px; }
+  .auth-tab { flex: 1; border: none; background: none; color: var(--muted); border-radius: 9px; padding: 8px; font-size: 13px; font-weight: 600; }
+  .auth-tab.active { background: var(--panel); color: var(--text); }
+  .auth-panel { display: flex; flex-direction: column; gap: 8px; }
+  .auth-switch { text-align: center; font-size: 13px; color: var(--muted); margin-top: 14px; }
+  .auth-switch a { color: var(--lime); text-decoration: none; cursor: pointer; }
+  .legal-footer { text-align: center; font-size: 12px; color: var(--muted); margin-top: 22px; }
+  .legal-footer a { color: var(--muted); text-decoration: underline; }
+  .info-text { color: var(--muted); font-size: 13px; margin: 0 0 10px; }
+  .pending-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-top: 1px solid var(--border); gap: 8px; }
+  .pending-row:first-child { border-top: none; }
+  .pending-email { font-size: 14px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; }
+  .pending-actions { display: flex; gap: 6px; flex: 0 0 auto; }
+  .pending-actions button { padding: 6px 10px; font-size: 12px; }
 </style>
 </head>
 <body>
@@ -181,10 +214,38 @@
   <div class="login-card">
     <div class="logo-dot">fz</div>
     <h1>financezro</h1>
-    <p>Enter your password to see your accounts.</p>
-    <input id="password" class="field" type="password" placeholder="Password" />
-    <button class="btn primary block" id="login-btn">Unlock</button>
-    <div class="error-text hidden" id="login-error">Wrong password.</div>
+    <p>Sign in to see your accounts.</p>
+
+    <div class="auth-tabs">
+      <button class="auth-tab active" data-tab="owner">Owner</button>
+      <button class="auth-tab" data-tab="signin">Sign in</button>
+      <button class="auth-tab" data-tab="register">Create account</button>
+    </div>
+
+    <div id="auth-owner" class="auth-panel">
+      <input id="password" class="field" type="password" placeholder="Password" />
+      <button class="btn primary block" id="login-btn" style="margin-top:0">Unlock</button>
+    </div>
+
+    <div id="auth-signin" class="auth-panel hidden">
+      <input id="signin-email" class="field" type="email" placeholder="Email" />
+      <input id="signin-password" class="field" type="password" placeholder="Password" />
+      <button class="btn primary block" id="signin-btn" style="margin-top:0">Sign in</button>
+    </div>
+
+    <div id="auth-register" class="auth-panel hidden">
+      <p class="info-text">Your account needs approval from the admin before you can sign in.</p>
+      <input id="register-email" class="field" type="email" placeholder="Email" />
+      <input id="register-password" class="field" type="password" placeholder="Password (min. 8 characters)" />
+      <button class="btn primary block" id="register-btn" style="margin-top:0">Request access</button>
+    </div>
+
+    <div class="error-text hidden" id="login-error"></div>
+    <div class="auth-switch hidden" id="auth-success">Request sent — you'll be able to sign in once approved.</div>
+
+    <div class="legal-footer">
+      <a href="/impressum.html">Impressum</a> · <a href="/datenschutz.html">Datenschutz</a>
+    </div>
   </div>
 </div>
 
@@ -251,6 +312,21 @@
         <div id="stats-bars"></div>
       </section>
 
+      <section id="screen-investments" class="screen hidden">
+        <div class="balance-card">
+          <div class="balance-label">Total Investments</div>
+          <div class="balance-amount" id="inv-total">–</div>
+          <div class="balance-row">
+            <div class="balance-currencies" id="inv-sub"></div>
+            <button class="pill-btn" id="inv-add-btn">+ Add investment</button>
+          </div>
+        </div>
+        <div class="section-head">
+          <h2>Connections</h2>
+        </div>
+        <div class="card" id="investments-list"></div>
+      </section>
+
       <section id="screen-settings" class="screen hidden">
         <h2>Settings</h2>
         <div class="card">
@@ -259,8 +335,15 @@
         </div>
         <button class="btn primary block" id="settings-add-bank">+ Add a bank</button>
         <div class="card" id="settings-connections" style="margin-top:14px;"></div>
+
+        <div id="settings-admin-section" class="hidden">
+          <div class="section-head"><h2>Pending approvals</h2></div>
+          <div class="card" id="settings-pending"></div>
+        </div>
+
         <button class="btn block" id="settings-refresh">Refresh all data</button>
         <button class="btn block danger" id="settings-logout">Logout</button>
+        <div class="legal-footer"><a href="/impressum.html">Impressum</a> · <a href="/datenschutz.html">Datenschutz</a></div>
       </section>
     </main>
   </div>
@@ -275,6 +358,9 @@
       </button>
       <button class="nav-btn" data-screen="recurring" title="Recurring">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
+      </button>
+      <button class="nav-btn" data-screen="investments" title="Investments">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
       </button>
       <button class="nav-btn" data-screen="stats" title="Stats">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 20V12M12 20V6M18 20v-7"/></svg>
@@ -301,12 +387,68 @@
   </div>
 </div>
 
+<div id="add-investment-modal" class="modal-backdrop hidden">
+  <div class="modal">
+    <div class="modal-head">
+      <strong>Add an investment</strong>
+      <button class="close-btn" id="close-add-investment">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+
+    <div class="provider-grid">
+      <button class="provider-card" data-provider="crypto_address">
+        <div class="provider-name">Crypto wallet</div>
+        <div class="provider-sub">Public address only</div>
+        <span class="badge-readonly">Read-only</span>
+      </button>
+      <button class="provider-card" data-provider="coinbase">
+        <div class="provider-name">Coinbase</div>
+        <div class="provider-sub">View-only API key</div>
+        <span class="badge-readonly">Read-only</span>
+      </button>
+      <button class="provider-card" data-provider="etoro">
+        <div class="provider-name">eToro</div>
+        <div class="provider-sub">Read-only API key</div>
+        <span class="badge-readonly">Read-only</span>
+      </button>
+    </div>
+
+    <div id="inv-form-crypto_address" class="inv-form hidden">
+      <p class="empty-note inv-note">We only look up this public address on the blockchain — no private key, seed phrase, or exchange login involved. A public address can't move funds, so this is read-only by design, not just by permission.</p>
+      <select id="inv-chain" class="field" style="width:100%;margin-bottom:8px;">
+        <option value="BTC">Bitcoin (BTC)</option>
+        <option value="ETH">Ethereum (ETH)</option>
+      </select>
+      <input id="inv-address" class="field" placeholder="Public address (e.g. bc1... or 0x...)" style="width:100%;margin-bottom:8px;" />
+      <input id="inv-label-crypto_address" class="field" placeholder="Nickname (e.g. Ledger)" style="width:100%;" />
+    </div>
+
+    <div id="inv-form-coinbase" class="inv-form hidden">
+      <p class="empty-note inv-note">In Coinbase: Settings → API → New API key → select <strong>View</strong> (read-only) permission only. Never enable Trade or Send/Transfer.</p>
+      <input id="inv-cb-key" class="field" placeholder="API key" style="width:100%;margin-bottom:8px;" />
+      <input id="inv-cb-secret" class="field" type="password" placeholder="API secret" style="width:100%;margin-bottom:8px;" />
+      <input id="inv-label-coinbase" class="field" placeholder="Nickname (e.g. Coinbase)" style="width:100%;" />
+    </div>
+
+    <div id="inv-form-etoro" class="inv-form hidden">
+      <p class="empty-note inv-note">In eToro's Builders Portal: create a key with <strong>Read</strong> permission only, never Trade. Note: eToro balance sync is newly added and not fully verified yet — your key is saved safely, but the first sync may show an error until this is confirmed.</p>
+      <input id="inv-eto-key" class="field" placeholder="x-api-key" style="width:100%;margin-bottom:8px;" />
+      <input id="inv-eto-userkey" class="field" type="password" placeholder="x-user-key" style="width:100%;margin-bottom:8px;" />
+      <input id="inv-label-etoro" class="field" placeholder="Nickname (e.g. eToro)" style="width:100%;" />
+    </div>
+
+    <button class="btn primary block hidden" id="inv-connect-btn" style="margin-top:4px;">Connect</button>
+  </div>
+</div>
+
 <script>
 const $ = (id) => document.getElementById(id);
 let institutionsCache = [];
 let accounts = [];
 let connections = [];
 let historyFilter = "all";
+let currentIsAdmin = false;
 
 function fmt(amount, currency) {
   try { return new Intl.NumberFormat(undefined, { style: "currency", currency: currency || "EUR" }).format(amount); }
@@ -340,6 +482,7 @@ async function showApp() {
   $("login-screen").classList.add("hidden");
   $("app").classList.remove("hidden");
   applyGreeting();
+  $("settings-admin-section").classList.toggle("hidden", !currentIsAdmin);
   await loadAll();
 }
 
@@ -359,11 +502,29 @@ $("settings-name").addEventListener("input", () => {
 
 async function init() {
   const me = await api("/api/me");
+  currentIsAdmin = !!me.isAdmin;
   if (me.authenticated) await showApp(); else showLogin();
 
   const params = new URLSearchParams(location.search);
   if (params.get("linked") || params.get("error")) history.replaceState({}, "", location.pathname);
 }
+
+function showAuthError(message) {
+  $("login-error").textContent = message;
+  $("login-error").classList.remove("hidden");
+  $("auth-success").classList.add("hidden");
+}
+
+// ---- auth tabs ----
+document.querySelectorAll(".auth-tab").forEach(tab => {
+  tab.onclick = () => {
+    document.querySelectorAll(".auth-tab").forEach(t => t.classList.toggle("active", t === tab));
+    document.querySelectorAll(".auth-panel").forEach(p => p.classList.add("hidden"));
+    $(`auth-${tab.dataset.tab}`).classList.remove("hidden");
+    $("login-error").classList.add("hidden");
+    $("auth-success").classList.add("hidden");
+  };
+});
 
 $("login-btn").onclick = async () => {
   $("login-error").classList.add("hidden");
@@ -372,11 +533,44 @@ $("login-btn").onclick = async () => {
       method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ password: $("password").value }),
     });
-    if (!r.ok) { $("login-error").classList.remove("hidden"); return; }
+    if (!r.ok) { showAuthError("Wrong password."); return; }
+    const me = await api("/api/me");
+    currentIsAdmin = !!me.isAdmin;
     await showApp();
-  } catch { $("login-error").classList.remove("hidden"); }
+  } catch { showAuthError("Wrong password."); }
 };
 $("password").addEventListener("keydown", (e) => { if (e.key === "Enter") $("login-btn").click(); });
+
+$("signin-btn").onclick = async () => {
+  $("login-error").classList.add("hidden");
+  try {
+    const r = await fetch("/api/login-user", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: $("signin-email").value, password: $("signin-password").value }),
+    });
+    const data = await r.json().catch(() => ({}));
+    if (!r.ok) { showAuthError(data.error || "Could not sign in."); return; }
+    const me = await api("/api/me");
+    currentIsAdmin = !!me.isAdmin;
+    await showApp();
+  } catch { showAuthError("Could not sign in."); }
+};
+
+$("register-btn").onclick = async () => {
+  $("login-error").classList.add("hidden");
+  $("auth-success").classList.add("hidden");
+  try {
+    const r = await fetch("/api/register", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: $("register-email").value, password: $("register-password").value }),
+    });
+    const data = await r.json().catch(() => ({}));
+    if (!r.ok) { showAuthError(data.error || "Could not create account."); return; }
+    $("auth-success").classList.remove("hidden");
+    $("register-email").value = ""; $("register-password").value = "";
+  } catch { showAuthError("Could not create account."); }
+};
+
 $("settings-logout").onclick = async () => { await api("/api/logout", { method: "POST" }); showLogin(); };
 
 // ---- nav ----
@@ -403,6 +597,8 @@ async function loadAll() {
   renderStats();
   renderConnections();
   await renderRecurring();
+  await renderInvestments();
+  if (currentIsAdmin) await renderPendingUsers();
 }
 
 function renderBalance() {
@@ -594,7 +790,7 @@ function renderConnections() {
   el.innerHTML = connections.map(c => `
     <div class="conn-row">
       <div>
-        <div class="conn-name">${escapeHtml(c.institution_name)}</div>
+        <div class="conn-name">${escapeHtml(c.institution_name)} <span class="badge-readonly">Read-only</span></div>
         <div class="conn-status">${escapeHtml(c.status)}</div>
       </div>
       <button class="remove-btn" data-id="${c.id}">Remove</button>
@@ -612,8 +808,10 @@ function renderConnections() {
 async function doSync() {
   const btn = $("header-refresh");
   btn.classList.add("spinning");
-  try { await api("/api/sync", { method: "POST" }); await loadAll(); }
-  finally { btn.classList.remove("spinning"); }
+  try {
+    await Promise.all([api("/api/sync", { method: "POST" }), api("/api/investments/sync", { method: "POST" })]);
+    await loadAll();
+  } finally { btn.classList.remove("spinning"); }
 }
 $("header-refresh").onclick = doSync;
 $("settings-refresh").onclick = doSync;
@@ -662,6 +860,140 @@ function renderSearchResults() {
       }
     };
   });
+}
+
+// ---- investments ----
+let selectedInvProvider = null;
+
+function providerLabel(p) { return { crypto_address: "Crypto wallet", coinbase: "Coinbase", etoro: "eToro" }[p] || p; }
+
+function investmentRowHtml(inv) {
+  const isCrypto = (asset) => !["EUR", "USD", "GBP", "CHF"].includes(asset);
+  const holdings = inv.balances
+    .map(b => b.quantity != null ? `${Number(b.quantity).toFixed(isCrypto(b.asset) ? 6 : 2)} ${b.asset}` : fmt(b.value_amount, b.value_currency))
+    .join(" · ");
+  const totalValue = inv.balances.reduce((s, b) => s + Number(b.value_amount || 0), 0);
+  const cur = inv.balances[0]?.value_currency || "EUR";
+  const statusNote = inv.status === "error"
+    ? `<div class="txn-sub" style="color:var(--danger)">${escapeHtml(inv.last_error || "Sync failed")}</div>` : "";
+  return `
+    <div class="conn-row">
+      <div style="min-width:0">
+        <div class="conn-name">${escapeHtml(inv.label)} <span class="badge-readonly">Read-only</span></div>
+        <div class="conn-status">${escapeHtml(providerLabel(inv.provider))}${holdings ? " • " + escapeHtml(holdings) : ""}</div>
+        ${statusNote}
+      </div>
+      <div style="text-align:right;flex:0 0 auto;">
+        <div class="amount" style="font-weight:700">${inv.balances.length ? fmt(totalValue, cur) : "–"}</div>
+        <button class="remove-btn" data-id="${inv.id}">Remove</button>
+      </div>
+    </div>`;
+}
+
+async function renderInvestments() {
+  const listBox = $("investments-list");
+  const totalBox = $("inv-total");
+  const subBox = $("inv-sub");
+  try {
+    const investments = await api("/api/investments");
+    if (!investments.length) {
+      totalBox.textContent = "–";
+      subBox.textContent = "No investments linked yet";
+      listBox.innerHTML = '<p class="empty-note" style="padding:0">Add a crypto wallet, Coinbase, or eToro to see it here.</p>';
+      return;
+    }
+    const totals = {};
+    for (const inv of investments) for (const b of inv.balances) totals[b.value_currency] = (totals[b.value_currency] || 0) + Number(b.value_amount || 0);
+    const entries = Object.entries(totals);
+    totalBox.textContent = entries.length ? fmt(entries[0][1], entries[0][0]) : "–";
+    subBox.textContent = `${investments.length} connection${investments.length === 1 ? "" : "s"}`;
+    listBox.innerHTML = investments.map(investmentRowHtml).join("");
+    listBox.querySelectorAll(".remove-btn").forEach(btn => {
+      btn.onclick = async () => {
+        if (!confirm("Remove this investment connection?")) return;
+        await api(`/api/investments/${btn.dataset.id}`, { method: "DELETE" });
+        await renderInvestments();
+      };
+    });
+  } catch {
+    listBox.innerHTML = '<p class="empty-note" style="padding:0">Could not load investments.</p>';
+  }
+}
+
+function openAddInvestment() {
+  $("add-investment-modal").classList.remove("hidden");
+  selectedInvProvider = null;
+  document.querySelectorAll(".provider-card").forEach(c => c.classList.remove("active"));
+  document.querySelectorAll(".inv-form").forEach(f => f.classList.add("hidden"));
+  $("inv-connect-btn").classList.add("hidden");
+}
+$("inv-add-btn").onclick = openAddInvestment;
+$("close-add-investment").onclick = () => $("add-investment-modal").classList.add("hidden");
+
+document.querySelectorAll(".provider-card").forEach(card => {
+  card.onclick = () => {
+    selectedInvProvider = card.dataset.provider;
+    document.querySelectorAll(".provider-card").forEach(c => c.classList.toggle("active", c === card));
+    document.querySelectorAll(".inv-form").forEach(f => f.classList.add("hidden"));
+    $(`inv-form-${selectedInvProvider}`).classList.remove("hidden");
+    $("inv-connect-btn").classList.remove("hidden");
+  };
+});
+
+$("inv-connect-btn").onclick = async () => {
+  const btn = $("inv-connect-btn");
+  btn.disabled = true; btn.textContent = "Connecting…";
+  try {
+    const payload = { provider: selectedInvProvider };
+    if (selectedInvProvider === "crypto_address") {
+      payload.chain = $("inv-chain").value;
+      payload.address = $("inv-address").value.trim();
+      payload.label = $("inv-label-crypto_address").value.trim() || (payload.chain + " wallet");
+    } else if (selectedInvProvider === "coinbase") {
+      payload.apiKey = $("inv-cb-key").value.trim();
+      payload.apiSecret = $("inv-cb-secret").value.trim();
+      payload.label = $("inv-label-coinbase").value.trim() || "Coinbase";
+    } else if (selectedInvProvider === "etoro") {
+      payload.apiKey = $("inv-eto-key").value.trim();
+      payload.userKey = $("inv-eto-userkey").value.trim();
+      payload.label = $("inv-label-etoro").value.trim() || "eToro";
+    } else {
+      alert("Pick a provider first."); return;
+    }
+    await api("/api/investments", { method: "POST", body: JSON.stringify(payload) });
+    $("add-investment-modal").classList.add("hidden");
+    await renderInvestments();
+  } catch (err) {
+    alert("Could not add investment: " + err.message);
+  } finally {
+    btn.disabled = false; btn.textContent = "Connect";
+  }
+};
+
+// ---- admin: pending user approvals ----
+async function renderPendingUsers() {
+  const el = $("settings-pending");
+  try {
+    const pending = await api("/api/users/pending");
+    el.innerHTML = pending.length
+      ? pending.map(u => `
+        <div class="pending-row">
+          <div class="pending-email">${escapeHtml(u.email)}</div>
+          <div class="pending-actions">
+            <button class="btn primary" data-id="${u.id}" data-action="approve">Approve</button>
+            <button class="btn danger" data-id="${u.id}" data-action="reject">Reject</button>
+          </div>
+        </div>`).join("")
+      : '<p class="empty-note" style="padding:0">No pending requests.</p>';
+    el.querySelectorAll("button[data-action]").forEach(btn => {
+      btn.onclick = async () => {
+        await api(`/api/users/${btn.dataset.id}/${btn.dataset.action}`, { method: "POST" });
+        await renderPendingUsers();
+      };
+    });
+  } catch {
+    el.innerHTML = '<p class="empty-note" style="padding:0">Could not load pending requests.</p>';
+  }
 }
 
 init();

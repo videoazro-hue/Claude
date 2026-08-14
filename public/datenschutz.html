@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Datenschutzerklärung – financezro</title>
+<style>
+  :root { --bg: #0b0c0e; --panel: #17181c; --border: #2a2c31; --text: #f4f5f6; --muted: #8d919a; --lime: #d6ff5c; --warn: #ffcf5c; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; line-height: 1.65; }
+  .wrap { max-width: 680px; margin: 0 auto; padding: 40px 20px 80px; }
+  a { color: var(--lime); }
+  h1 { font-size: 24px; margin: 0 0 6px; }
+  h2 { font-size: 17px; margin: 30px 0 8px; }
+  h3 { font-size: 14px; margin: 18px 0 6px; color: var(--text); }
+  p, li { color: var(--text); font-size: 15px; }
+  ul { padding-left: 20px; margin: 6px 0; }
+  .muted { color: var(--muted); font-size: 14px; }
+  .back { display: inline-block; margin-bottom: 24px; color: var(--muted); text-decoration: none; font-size: 14px; }
+  .placeholder { background: rgba(255, 207, 92, 0.12); border: 1px dashed var(--warn); color: var(--warn); padding: 12px 14px; border-radius: 10px; font-size: 14px; margin: 16px 0; }
+  .card { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 20px; margin: 14px 0; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; margin: 10px 0; }
+  th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  th { color: var(--muted); font-weight: 600; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a class="back" href="/">← Zurück zur App</a>
+  <h1>Datenschutzerklärung</h1>
+  <p class="muted">Stand: August 2026</p>
+
+  <h2>1. Verantwortlicher</h2>
+  <p>Verantwortlich für die Datenverarbeitung im Rahmen dieser App ist die im <a href="/impressum.html">Impressum</a> genannte Person. Kontakt in Datenschutzfragen: <a href="mailto:videoazro@gmail.com">videoazro@gmail.com</a>.</p>
+
+  <h2>2. Worum es bei financezro geht</h2>
+  <p>financezro ist eine private, nicht-öffentliche Anwendung zur eigenen Übersicht über Bankkonten und Investments. Der Zugang ist auf den Betreiber sowie einzeln durch ihn freigeschaltete Personen beschränkt (Registrierung mit anschließender manueller Freigabe).</p>
+
+  <h2>3. Welche Daten verarbeitet werden</h2>
+  <div class="card">
+    <table>
+      <tr><th>Datenkategorie</th><th>Zweck</th><th>Quelle</th></tr>
+      <tr><td>Kontoinformationen (IBAN, Kontostand, Umsätze/Transaktionen)</td><td>Anzeige der Finanzübersicht</td><td>Über die vom Nutzer verbundene Bank via GoCardless (PSD2/Open Banking), nur lesend</td></tr>
+      <tr><td>Investment-Daten (Kryptowährungs-Adressen, Coinbase-/eToro-Kontostände)</td><td>Anzeige im Bereich „Investments“</td><td>Öffentliche Blockchain-Daten bzw. vom Nutzer selbst hinterlegte, lese-beschränkte API-Schlüssel</td></tr>
+      <tr><td>API-Zugangsdaten für Coinbase/eToro (falls verbunden)</td><td>Regelmäßiger, automatischer Datenabruf</td><td>Vom Nutzer eingegeben; verschlüsselt gespeichert (AES-256-GCM)</td></tr>
+      <tr><td>E-Mail-Adresse, Passwort (als Hash)</td><td>Kontoerstellung, Anmeldung, Freigabe-Workflow</td><td>Vom Nutzer bei der Registrierung angegeben</td></tr>
+      <tr><td>Session-Cookie</td><td>Angemeldet bleiben</td><td>Technisch beim Login erzeugt</td></tr>
+    </table>
+  </div>
+
+  <h2>4. Rechtsgrundlage</h2>
+  <p>Die Verarbeitung erfolgt zur Erfüllung des Nutzungsvertrags mit dem jeweiligen Nutzer (Art. 6 Abs. 1 lit. b DSGVO) sowie auf Grundlage berechtigten Interesses am sicheren Betrieb der Anwendung (Art. 6 Abs. 1 lit. f DSGVO). Für Kontoinformationen erteilt der Nutzer zusätzlich seiner Bank eine gesonderte, jederzeit widerrufbare Zustimmung im Rahmen des PSD2-Verfahrens.</p>
+
+  <h2>5. Empfänger / Auftragsverarbeiter</h2>
+  <ul>
+    <li><strong>GoCardless Ltd.</strong> – Kontoinformationsdienst (Bank Account Data API) zur lesenden Abfrage von Kontodaten bei der jeweiligen Bank.</li>
+    <li><strong>Cloudflare, Inc.</strong> – Hosting der Anwendung sowie Speicherung der Daten (Workers, D1-Datenbank, KV-Speicher).</li>
+    <li><strong>Coinbase / eToro</strong> – nur sofern der Nutzer selbst eine entsprechende Verbindung mit einem eigens erstellten, lese-beschränkten API-Schlüssel herstellt.</li>
+    <li><strong>Blockstream, öffentliche Ethereum-RPC-Knoten, CoinGecko</strong> – zur Abfrage öffentlicher Blockchain-Salden und Kryptowährungskurse; hierbei wird ausschließlich die öffentliche Wallet-Adresse übermittelt, die für sich genommen keine natürliche Person identifiziert.</li>
+  </ul>
+  <p class="muted">Es findet keine Weitergabe an Dritte zu Werbezwecken statt.</p>
+
+  <h2>6. Speicherdauer</h2>
+  <p>Daten werden gespeichert, solange das jeweilige Konto bzw. die jeweilige Verbindung (Bank, Investment) besteht. Nach Entfernen einer Verbindung werden zugehörige Zugangsdaten gelöscht; historische Transaktionsdaten können bis zur manuellen Löschung durch den Verantwortlichen bestehen bleiben.</p>
+
+  <h2>7. Datensicherheit</h2>
+  <ul>
+    <li>Verbindungen zur Anwendung sind TLS-verschlüsselt.</li>
+    <li>Passwörter werden nicht im Klartext gespeichert, sondern als PBKDF2-SHA256-Hash mit individuellem Salt.</li>
+    <li>API-Schlüssel für Coinbase/eToro werden mit AES-256-GCM verschlüsselt gespeichert; der Schlüssel dazu liegt ausschließlich als serverseitiges Secret vor.</li>
+    <li>Bankdaten werden nie als Passwort/Zugangsdaten gespeichert – der Zugriff erfolgt ausschließlich über das schreibgeschützte PSD2-Verfahren via GoCardless.</li>
+  </ul>
+
+  <h2>8. Rechte der betroffenen Person</h2>
+  <p>Jede betroffene Person hat das Recht auf Auskunft (Art. 15 DSGVO), Berichtigung (Art. 16), Löschung (Art. 17), Einschränkung der Verarbeitung (Art. 18), Datenübertragbarkeit (Art. 20) sowie Widerspruch (Art. 21) gegen die Verarbeitung ihrer personenbezogenen Daten. Anfragen bitte an <a href="mailto:videoazro@gmail.com">videoazro@gmail.com</a>.</p>
+  <p>Zudem besteht ein Beschwerderecht bei einer Datenschutzaufsichtsbehörde.</p>
+
+  <h2>9. Cookies</h2>
+  <p>Es wird ausschließlich ein technisch notwendiges Session-Cookie gesetzt, um den Anmeldestatus zu speichern. Es findet kein Tracking und keine Analyse zu Marketingzwecken statt.</p>
+
+  <div class="placeholder">
+    ⚠️ Hinweis: Dieser Text ist ein solider Entwurf für eine private/nicht-kommerzielle Nutzung, ersetzt aber keine Rechtsberatung. Bei kommerzieller Nutzung oder Nutzern außerhalb des engsten Kreises empfiehlt sich eine anwaltliche Prüfung.
+  </div>
+</div>
+</body>
+</html>

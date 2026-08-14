@@ -174,6 +174,74 @@ export async function removeConnection(env: Env, id: string) {
   ]);
 }
 
+export async function createInvestment(
+  env: Env,
+  row: { id: string; provider: string; label: string; config_json: string; secret_enc: string | null }
+) {
+  await env.DB.prepare(
+    `INSERT INTO investments (id, provider, label, config_json, secret_enc, status) VALUES (?, ?, ?, ?, ?, 'active')`
+  )
+    .bind(row.id, row.provider, row.label, row.config_json, row.secret_enc)
+    .run();
+}
+
+export async function getInvestment(env: Env, id: string) {
+  return env.DB.prepare(`SELECT * FROM investments WHERE id = ?`).bind(id).first<{
+    id: string;
+    provider: string;
+    label: string;
+    config_json: string;
+    secret_enc: string | null;
+  }>();
+}
+
+export async function listInvestments(env: Env) {
+  const { results } = await env.DB.prepare(
+    `SELECT id, provider, label, status, last_error, created_at FROM investments WHERE status != 'removed' ORDER BY created_at DESC`
+  ).all<{ id: string; provider: string; label: string; status: string; last_error: string | null }>();
+  return results;
+}
+
+export async function listInvestmentsWithBalances(env: Env) {
+  const { results } = await env.DB.prepare(
+    `SELECT i.id, i.provider, i.label, i.status, i.last_error,
+            b.asset, b.quantity, b.value_amount, b.value_currency, b.fetched_at
+     FROM investments i
+     LEFT JOIN investment_balances b ON b.investment_id = i.id
+     WHERE i.status != 'removed'
+     ORDER BY i.created_at DESC`
+  ).all();
+  return results;
+}
+
+export async function removeInvestment(env: Env, id: string) {
+  await env.DB.prepare(`UPDATE investments SET status = 'removed' WHERE id = ?`).bind(id).run();
+}
+
+export async function markInvestmentOk(env: Env, id: string) {
+  await env.DB.prepare(`UPDATE investments SET status = 'active', last_error = NULL WHERE id = ?`).bind(id).run();
+}
+
+export async function markInvestmentError(env: Env, id: string, message: string) {
+  await env.DB.prepare(`UPDATE investments SET status = 'error', last_error = ? WHERE id = ?`).bind(message, id).run();
+}
+
+export async function replaceInvestmentBalances(
+  env: Env,
+  investmentId: string,
+  balances: Array<{ asset: string; quantity: number | null; value_amount: number; value_currency: string }>
+) {
+  await env.DB.prepare(`DELETE FROM investment_balances WHERE investment_id = ?`).bind(investmentId).run();
+  if (!balances.length) return;
+  const stmts = balances.map((b) =>
+    env.DB.prepare(
+      `INSERT INTO investment_balances (investment_id, asset, quantity, value_amount, value_currency, fetched_at)
+       VALUES (?, ?, ?, ?, ?, datetime('now'))`
+    ).bind(investmentId, b.asset, b.quantity, b.value_amount, b.value_currency)
+  );
+  await env.DB.batch(stmts);
+}
+
 export async function listTransactionsForDetection(env: Env) {
   const { results } = await env.DB.prepare(
     `SELECT t.account_id, a.institution_name, t.booking_date, t.amount, t.currency, t.description, t.counterparty

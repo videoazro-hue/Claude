@@ -4,12 +4,15 @@ compatibility_date = "2026-08-01"
 compatibility_flags = ["nodejs_compat"]
 
 # Static frontend (public/index.html etc.) served alongside the Worker.
-# The Worker code always runs first so it can enforce auth on /api/* routes;
-# static files under public/ are served for everything else.
+# Static files match first and are served directly (no Worker invocation,
+# so no auth check runs on them) - by design: legal pages (Impressum,
+# Datenschutzerklärung) must be reachable without logging in, and the
+# dashboard's own auth is enforced at the /api/* level, not on the HTML
+# shell itself. Anything that doesn't match a static file (i.e. every
+# /api/* route) falls through to the Worker.
 [assets]
 directory = "./public"
 binding = "ASSETS"
-run_worker_first = true
 
 [[d1_databases]]
 binding = "DB"

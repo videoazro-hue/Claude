@@ -53,8 +53,11 @@ npm run migrate:remote
 ```
 npx wrangler secret put GC_SECRET_ID
 npx wrangler secret put GC_SECRET_KEY
-npx wrangler secret put APP_PASSWORD   # the password you'll use to unlock the dashboard
+npx wrangler secret put APP_PASSWORD   # your own owner/admin password
+npx wrangler secret put ENCRYPTION_KEY # generate with: openssl rand -base64 32
 ```
+`ENCRYPTION_KEY` encrypts any Coinbase/eToro API credentials at rest (see
+"Investments" below) - required before connecting either of those.
 
 ### 6. Deploy
 ```
@@ -86,6 +89,57 @@ browser back to it after you approve access at your bank.)
    account per day — a few refreshes a day is fine, don't script it to
    poll continuously.)
 
+## Investments (read-only)
+
+A separate "Investments" section for crypto/broker holdings, kept
+deliberately read-only wherever a real read-only option exists:
+
+- **Crypto wallet by public address** (e.g. what your Ledger holds funds
+  at) - just paste the public BTC/ETH address. This isn't "read-only by
+  permission", it's read-only by cryptographic design: a public address
+  cannot authorize a spend, so there is no credential here that could ever
+  be stolen and used to move funds, even in a full compromise. Balances
+  come from public blockchain explorers (Blockstream, a public Ethereum
+  RPC) plus CoinGecko for EUR pricing.
+- **Coinbase** - generate an API key under Coinbase Settings → API → New
+  API key, and pick the **View** (read-only) permission. That key can only
+  read balances, never trade or withdraw. It's encrypted at rest with
+  `ENCRYPTION_KEY` before being stored.
+- **eToro** - eToro has a public API with genuine read-only ("Read")
+  keys. The connection UI and encrypted storage are fully working, but
+  live balance syncing isn't wired up to a verified endpoint yet - their
+  docs portal wasn't reachable to confirm the exact response shape while
+  building this, and this app would rather show a clear "not yet synced"
+  error than fabricate a number. Your key is saved safely either way.
+
+**eToro, Coinbase - what if this app gets hacked?** Only a read-only key
+is ever stored, and it's encrypted with a key that only exists as a
+Cloudflare secret (never in the database). Worst case, an attacker reads
+your balances until you revoke the key on Coinbase's/eToro's side - they
+cannot trade or withdraw, because the key itself doesn't have that power.
+
+## Accounts & access
+
+- You (the deployer) always log in with `APP_PASSWORD` - unchanged, and
+  this is the only login that can approve other accounts.
+- Anyone else can request access from the login screen's "Create account"
+  tab (email + password). New accounts start **pending** and cannot sign
+  in until you approve them from Settings → Pending approvals.
+- There's no email-sending in this app, so approval is manual: you review
+  and approve/reject the request from the dashboard, not via an emailed
+  link.
+
+## Legal pages (Impressum / Datenschutzerklärung)
+
+`/impressum.html` and `/datenschutz.html` are static, unauthenticated
+pages (required for a German-operated site regardless of who it's shared
+with). The Impressum currently has placeholder fields (marked with ⚠️) for
+your name/address - fill those in directly in `public/impressum.html`
+before sharing access with anyone beyond yourself. The privacy policy
+describes what this app actually does with data (GoCardless, Cloudflare,
+optional Coinbase/eToro, the crypto price/explorer lookups) but isn't a
+substitute for legal advice if you go beyond private/family use.
+
 ## Notes / limitations
 
 - **PayPal & some e-money accounts**: coverage depends on whether that
@@ -102,10 +156,16 @@ browser back to it after you approve access at your bank.)
 ## Project layout
 
 ```
-src/index.ts        Hono app: routes, auth middleware
-src/gocardless.ts    GoCardless Bank Account Data API client
+src/index.ts          Hono app: routes, auth middleware
+src/gocardless.ts      GoCardless Bank Account Data API client
+src/recurring.ts        Recurring-payment pattern detection
+src/investments/         Crypto/Coinbase/eToro read-only adapters
+src/crypto.ts             AES-GCM encryption for stored API credentials
+src/users.ts               Account registration + password hashing
 src/db.ts            D1 query helpers
-src/auth.ts          Password + session cookie auth
+src/auth.ts          Admin + per-user session auth
 public/index.html    Dashboard frontend (vanilla JS)
+public/impressum.html   Legal notice (placeholders - fill in your details)
+public/datenschutz.html  Privacy policy
 migrations/          D1 schema
 ```

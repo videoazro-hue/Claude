@@ -10,6 +10,7 @@ export interface Env {
   GC_SECRET_ID: string;
   GC_SECRET_KEY: string;
   APP_PASSWORD: string;
+  ENCRYPTION_KEY: string;
 }
 
 export interface Institution {
